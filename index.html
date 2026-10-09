@@ -288,7 +288,7 @@ function buildManualRig(key, im){ const M=MANUAL_RIGS[key]; const w=im.width, h=
   // 닫힘선은 원본 실루엣 안쪽에만 남김 (몸 바깥으로 삐져나오는 자국 제거)
   ux.globalCompositeOperation='destination-in'; ux.drawImage(im,0,0); ux.globalCompositeOperation='source-over';
   return RIGS[key]={body, under, legs, w, h, manual:true}; }
-function buildWalkRig(key){ const im=IMG[key]; if(!im) return null; if(RIGS[key]) return RIGS[key]; if(MANUAL_RIGS[key]) return buildManualRig(key, im);
+function buildWalkRig(key){ const im=IMG[key]; if(!im) return null; if(RIGS[key]) return RIGS[key]; if(false && MANUAL_RIGS[key]) return buildManualRig(key, im);
   const w=im.width, h=im.height, c=document.createElement('canvas'); c.width=w; c.height=h; const x=c.getContext('2d'); x.drawImage(im,0,0); const d=x.getImageData(0,0,w,h).data;
   const cutY=Math.round(h*0.70); // 이 아래를 다리 후보로
   const mask=new Uint8Array(w*h); for(let i=0;i<w*h;i++) mask[i]=d[i*4+3]>40?1:0;
@@ -402,17 +402,17 @@ function enemyArt(type, size){
 function drawEnemy(type, size, x, y, flip, alpha, e){ const sp=enemyArt(type,size); ctx.save(); ctx.translate(x,y); if(flip) ctx.scale(-1,1); if(e&&!e.boss){ const w=Math.sin((G?G.t:0)*10+x*0.01)*0.08; ctx.rotate(w); } if(alpha!=null) ctx.globalAlpha=alpha; ctx.drawImage(sp.c,-sp.s/2,-sp.s/2,sp.s,sp.s); ctx.restore(); }
 
 // ====================== 데이터 정의 ======================
-const SP = 'assets/sprites/'; const SPRITE_VER='9';
+const SP = 'assets/sprites/'; const SPRITE_VER='10';
 const PETS = [
-  { id:'pari', name:'파리', breed:'SPITZ', walkFacesLeft:true, hp:115, speed:3.6, weapon:'soccer', burst:'spotlight',
+  { id:'pari', name:'파리', breed:'SPITZ', walkFacesLeft:true, walkStyle:'hop', hp:115, speed:3.6, weapon:'soccer', burst:'spotlight',
     img:{ walk:'pari_walk', hello:'pari_hello', love:'pari_love', down:'pari_down', burst:'pari_jump', sit:'pari_sit' },
     evoNames:['파리','인기스타 파리','전설의 파리'],
     desc:'관심은 전부 파리 것! 축구공을 튕겨 적을 맞히는 돌격형. 간식이 삶의 원동력.', burstDesc:'「관심 집중!」 간식 전부 끌어오기 + 전체 충격파', tag:'밸런스' },
-  { id:'kong', name:'콩이', breed:'DOBERMANN', walkFacesLeft:true, legMode:'rotate', hp:175, speed:3.0, weapon:'dunk', burst:'dash',
+  { id:'kong', name:'콩이', breed:'DOBERMANN', walkFacesLeft:true, walkStyle:'hop', hp:175, speed:3.0, weapon:'dunk', burst:'dash',
     img:{ walk:'kong_walk', hello:'kong_hello', love:'kong_love', down:'kong_down', burst:'kong_play', sit:'kong_sit' },
     evoNames:['콩이','운동장의 콩이','전설의 콩이'],
     desc:'멋진 외모, 순한 마음. 농구공 덩크 충격파로 주변을 밀어내는 탱커. 심심한 걸 제일 싫어해요.', burstDesc:'「운동장 질주」 5초간 무적 돌진, 부딪히는 적 모두 피해', tag:'탱커' },
-  { id:'siri', name:'시리', breed:'POODLE', walkFacesLeft:false, hp:125, speed:3.3, weapon:'potato', burst:'cheer',
+  { id:'siri', name:'시리', breed:'POODLE', walkFacesLeft:false, walkStyle:'hop', hp:125, speed:3.3, weapon:'potato', burst:'cheer',
     img:{ walk:'siri_walk', hello:'siri_hello', love:'siri_love', down:'siri_down', burst:'siri_play', sit:'siri_sit' },
     evoNames:['시리','배려왕 시리','전설의 시리'],
     desc:'섬세하고 배려심 깊은 푸들. 고구마를 던지는 원거리형. 혼자 있는 건 싫어요.', burstDesc:'「친구 응원」 체력 50% 회복 + 6초간 피해 2배', tag:'원거리',
@@ -759,7 +759,10 @@ function render(){
   const state = (p.burstActive>0 && p.burstKind!=='churu') ? 'burst':'walk';
   const palpha = p.inv>0? (Math.floor(G.t*20)%2?0.4:1):1;
   const flipWalk = G.pet.walkFacesLeft ? p.face>0 : p.face<0;
-  if(p.moving && state==='walk'){ const ph=G.t*11; drawPetWalk(G.pet.id+'_walk', h, p.x, p.y, flipWalk, palpha, 0, ph, 0.36); }
+  if(p.moving && state==='walk' && G.pet.walkStyle==='hop'){ // 다리 고정: 몸 전체가 통통 튀며 살짝 끄덕임 (발 기준)
+    const ph=G.t*11; const hop=Math.abs(Math.sin(ph))*6, tilt=Math.sin(ph*2)*0.035, sq=1-Math.max(0,-Math.sin(ph*2))*0.04;
+    ctx.save(); ctx.translate(p.x, p.y+h*0.46-hop); ctx.rotate(tilt); ctx.scale(1/sq, sq); drawPet(G.pet.id+'_walk', h, 0, -h*0.46, flipWalk, palpha, 0); ctx.restore(); }
+  else if(p.moving && state==='walk'){ const ph=G.t*11; drawPetWalk(G.pet.id+'_walk', h, p.x, p.y, flipWalk, palpha, 0, ph, 0.36); }
   else if(state==='walk') drawPet(G.pet.id+'_walk', h, p.x, p.y-bob, flipWalk, palpha, rot);
   else drawPet(G.pet.id+'_'+state, h, p.x, p.y-bob, p.face<0, palpha, rot);
   if(p.evo===2){ drawSprite('👑',22,p.x,p.y-h/2-6-bob); } else if(p.evo===1){ drawSprite('✨',18,p.x+h*0.35,p.y-h/2-bob); }
