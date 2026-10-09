@@ -35,7 +35,7 @@ grant insert on public.scores to anon;
 grant select on public.leaderboard to anon;
 
 -- 4) 도배 방지: 같은 기기(client_id)는 1분에 3건까지
-create or replace function public.scores_rate_limit() returns trigger language plpgsql as $$
+create or replace function public.scores_rate_limit() returns trigger language plpgsql security definer set search_path = public as $$
 begin
   if new.client_id is not null and (select count(*) from public.scores where client_id = new.client_id and created_at > now() - interval '1 minute') >= 3 then
     raise exception 'rate limit';
