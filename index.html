@@ -104,6 +104,16 @@
   .trainpets{display:flex;gap:8px;justify-content:center;margin-bottom:12px;flex-wrap:wrap;}
   .trainpets .tp{padding:6px 12px;border-radius:999px;border:2px solid var(--silver);font-size:12px;font-weight:700;cursor:pointer;background:#fff;}
   .trainpets .tp.on{border-color:var(--blue);background:#EEF1FA;color:var(--blue);}
+  .event{display:block;background:linear-gradient(90deg,#293B8A,#3D55B5);color:#fff;border-radius:16px;padding:12px 16px;margin:0 auto 14px;font-size:13px;font-weight:700;cursor:pointer;text-align:left;box-shadow:0 8px 20px rgba(41,59,138,.25);}
+  .event b{color:#FFC94D;} .event small{display:block;font-weight:300;opacity:.85;margin-top:3px;font-size:11px;}
+  .event.big{cursor:default;padding:16px 18px;font-size:14px;} .event.big small{font-size:12px;margin-top:6px;line-height:1.6;}
+  .event .pill{display:inline-block;background:#61CA84;color:#1D1D1B;border-radius:999px;padding:2px 10px;font-size:11px;margin-right:6px;}
+  .lb{text-align:left;max-width:520px;margin:0 auto;} .lb .lr{display:grid;grid-template-columns:36px 1fr auto auto;gap:10px;align-items:center;padding:9px 12px;border-radius:12px;font-size:14px;} .lb .lr:nth-child(odd){background:var(--bg);}
+  .lb .lr.top{background:#EEF1FA;} .lb .lr.me{outline:2px solid var(--green);} .lb .rk{font-family:'Montserrat';font-weight:800;color:var(--blue);} .lb .nk{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;} .lb .tm{font-family:'Montserrat';font-weight:800;font-variant-numeric:tabular-nums;} .lb .pt{font-size:11px;color:#777;}
+  .lb .empty{padding:20px;text-align:center;color:#777;font-size:13px;font-weight:300;}
+  .rankbox{background:var(--bg);border-radius:16px;padding:14px;margin:12px auto 0;max-width:420px;text-align:left;}
+  .rankbox .rb-title{font-weight:700;color:var(--blue);margin-bottom:8px;} .rb-row{display:flex;gap:8px;flex-wrap:wrap;} .rb-row input{flex:1 1 150px;min-width:0;padding:10px 12px;border:2px solid var(--silver);border-radius:10px;font-family:inherit;font-size:14px;} .rb-row input:focus{outline:none;border-color:var(--blue);}
+  .rb-consent{display:flex;gap:6px;align-items:flex-start;font-size:11px;color:#666;font-weight:300;margin:8px 0 2px;line-height:1.5;} .rankbox .btn{margin-top:8px;padding:10px 20px;font-size:15px;}
   .promo{display:inline-flex;align-items:center;gap:8px;margin-top:14px;padding:7px 14px 7px 8px;border-radius:999px;background:var(--bg);border:1px solid var(--silver);color:var(--blue);font-size:12px;font-weight:700;text-decoration:none;pointer-events:auto;}
   .promo img{height:26px;}
   .promo:hover{background:#EEF1FA;}
@@ -132,8 +142,9 @@
       <div class="slogan">HAVE A NICE PETODAY</div>
       <h1>펫 서바이버</h1>
       <div class="wallet"><span>🥣 사료 <b id="wKibble">0</b></span><span>🧃 츄르 <b id="wChuru">0</b></span></div>
-      <div class="tabs"><div class="tab on" data-tab="play" onclick="setTab('play')">🐾 출동</div><div class="tab" data-tab="shop" onclick="setTab('shop')">🥣 사료 상점</div><div class="tab" data-tab="train" onclick="setTab('train')">🧃 훈련</div></div>
+      <div class="tabs"><div class="tab on" data-tab="play" onclick="setTab('play')">🐾 출동</div><div class="tab" data-tab="rank" onclick="setTab('rank')">🏆 랭킹</div><div class="tab" data-tab="shop" onclick="setTab('shop')">🥣 사료 상점</div><div class="tab" data-tab="train" onclick="setTab('train')">🧃 훈련</div></div>
       <div id="tab_play">
+        <div class="event" id="eventBanner" onclick="setTab('rank')"></div>
         <div class="sub">파리·콩이·시리·레오와 함께 몰려오는 벼룩 떼를 피해 간식을 주워 먹고 성장하세요. 공격은 자동!</div>
         <div class="modes" id="modeList"></div>
         <div class="cards" id="petCards"></div>
@@ -141,6 +152,13 @@
           이동 : WASD / 방향키 &nbsp;|&nbsp; 필살기 : C &nbsp;|&nbsp; 일시정지 : ESC<br>
           모바일 : 화면 왼쪽 드래그로 이동, 오른쪽 버튼으로 필살기
         </div>
+      </div>
+      <div id="tab_rank" style="display:none">
+        <div class="event big" id="eventRules"></div>
+        <div class="sub">무한 모드 생존 시간 순위입니다. 같은 닉네임은 최고 기록만 집계됩니다.</div>
+        <div class="lb" id="lbList"></div>
+        <div class="help" id="lbMine"></div>
+        <button class="btn ghost" onclick="shareGame()">📣 친구에게 공유</button>
       </div>
       <div id="tab_shop" style="display:none">
         <div class="sub">모든 캐릭터에 적용되는 영구 강화. 사료는 판이 끝날 때 점수·생존 시간으로 받습니다.</div>
@@ -180,6 +198,14 @@
       <div class="sub" id="resultSub"></div>
       <div class="stats" id="resultStats"></div>
       <div class="earn" id="resultEarn"></div>
+      <div class="rankbox" id="rankBox" style="display:none">
+        <div class="rb-title">🏆 랭킹 등록</div>
+        <div class="rb-row"><input id="rbNick" maxlength="10" placeholder="닉네임 (2~10자)"><input id="rbInsta" maxlength="30" placeholder="인스타 아이디 (선택, 당첨 연락용)"></div>
+        <label class="rb-consent"><input type="checkbox" id="rbAgree"> 닉네임은 순위표에 공개되고, 인스타 아이디는 당첨 연락에만 쓰입니다.</label>
+        <button class="btn" id="rbSubmit" onclick="submitScore()">등록하기</button>
+        <div class="help" id="rbMsg"></div>
+      </div>
+      <button class="btn ghost" onclick="shareResult()">📣 기록 공유</button>
       <div><a class="promo" id="resultPromo" href="https://smartstore.naver.com/petodaystore/products/5982334170" target="_blank" rel="noopener"><img src="assets/sprites/item_dangvian.png" alt=""><span id="resultPromoText"></span></a></div>
       <button class="btn" onclick="backToTitle()">타이틀로</button>
       <button class="btn ghost" onclick="retry()">같은 설정으로 다시</button>
@@ -269,6 +295,12 @@ function enemyArt(type, size){
       x.beginPath(); x.moveTo(-r*0.03,r*0.55); x.lineTo(r*0.03,r*0.55); x.lineTo(0,r*1.0); x.closePath(); x.fillStyle='#9AA3AD'; x.fill(); x.stroke(); x.restore(); eye(-r*0.18,-r*0.2,r*0.1); eye(r*0.05,-r*0.32,r*0.1); angry(-r*0.18,-r*0.42,r*0.15); angry(r*0.05,-r*0.55,-r*0.15); break; }
     case 'boss2':{ x.fillStyle='#1D1D1B'; x.beginPath(); x.moveTo(-r*0.8,r*0.8); x.lineTo(-r*0.8,-r*0.1); x.arc(0,-r*0.1,r*0.8,Math.PI,0); x.lineTo(r*0.8,r*0.8); for(let i=0;i<6;i++){ x.lineTo(r*0.8-(i+0.5)*r*0.27,r*0.6); x.lineTo(r*0.8-(i+1)*r*0.27,r*0.8); } x.closePath(); x.fill(); x.stroke();
       x.fillStyle='#fff'; x.beginPath(); x.ellipse(-r*0.28,-r*0.15,r*0.16,r*0.22,0,0,6.283); x.ellipse(r*0.28,-r*0.15,r*0.16,r*0.22,0,0,6.283); x.fill(); x.fillStyle=OL; x.beginPath(); x.arc(-r*0.25,-r*0.1,r*0.07,0,6.283); x.arc(r*0.31,-r*0.1,r*0.07,0,6.283); x.fill(); x.strokeStyle='#fff'; x.beginPath(); x.moveTo(-r*0.2,r*0.3); x.quadraticCurveTo(0,r*0.15,r*0.2,r*0.3); x.stroke(); x.strokeStyle=OL; break; }
+    case 'boss4':{ x.fillStyle='#B8A48F'; x.beginPath(); for(let i=0;i<22;i++){ const a=i/22*6.283, rr=r*(0.78+0.14*Math.sin(i*2.7)); x.lineTo(Math.cos(a)*rr,Math.sin(a)*rr); } x.closePath(); x.fill(); x.stroke();
+      x.strokeStyle='#8E7A64'; x.lineWidth=Math.max(1,size*0.025); for(let i=0;i<4;i++){ x.beginPath(); x.moveTo(-r*0.6+i*r*0.3,-r*0.4); x.quadraticCurveTo(-r*0.3+i*r*0.3,r*0.2,-r*0.5+i*r*0.3,r*0.55); x.stroke(); } x.strokeStyle=OL; x.lineWidth=Math.max(1.5,size*0.06);
+      eye(-r*0.25,-r*0.15,r*0.12); eye(r*0.25,-r*0.15,r*0.12); angry(-r*0.25,-r*0.42,r*0.18); angry(r*0.25,-r*0.42,-r*0.18); x.fillStyle='#fff'; x.beginPath(); x.moveTo(-r*0.3,r*0.2); x.lineTo(r*0.3,r*0.2); x.lineTo(r*0.22,r*0.42); x.lineTo(r*0.1,r*0.28); x.lineTo(0,r*0.45); x.lineTo(-r*0.1,r*0.28); x.lineTo(-r*0.22,r*0.42); x.closePath(); x.fill(); x.stroke(); break; }
+    case 'boss5':{ x.save(); x.rotate(-0.4); x.fillStyle='#293B8A'; x.beginPath(); x.roundRect(-r*0.75,-r*0.35,r*1.1,r*0.6,r*0.25); x.fill(); x.stroke(); x.beginPath(); x.roundRect(r*0.3,-r*0.2,r*0.55,r*0.32,r*0.06); x.fillStyle='#3D55B5'; x.fill(); x.stroke();
+      x.beginPath(); x.roundRect(-r*0.45,r*0.2,r*0.3,r*0.6,r*0.08); x.fillStyle='#1D1D1B'; x.fill(); x.stroke(); x.strokeStyle='#D1D3D5'; x.lineWidth=Math.max(1.5,size*0.04); for(let i=0;i<3;i++){ x.beginPath(); x.moveTo(r*0.9,-r*0.15+i*r*0.12); x.quadraticCurveTo(r*1.15,-r*0.2+i*r*0.12,r*1.35,-r*0.05+i*r*0.12); x.stroke(); } x.restore(); x.strokeStyle=OL; x.lineWidth=Math.max(1.5,size*0.06);
+      eye(-r*0.45,-r*0.12,r*0.09); eye(-r*0.15,-r*0.22,r*0.09); angry(-r*0.45,-r*0.35,r*0.13); angry(-r*0.15,-r*0.45,-r*0.13); break; }
     case 'boss3':{ const g=x.createRadialGradient(-r*0.2,-r*0.2,r*0.1,0,0,r*0.9); g.addColorStop(0,'#3D55B5'); g.addColorStop(1,'#141A3A'); circ(0,0,r*0.85,g); x.strokeStyle='#5E6FBF'; x.lineWidth=Math.max(1,size*0.03); x.beginPath(); for(let a=0;a<12;a+=0.2){ const rr=a/12*r*0.7; x.lineTo(Math.cos(a)*rr,Math.sin(a)*rr); } x.stroke(); x.strokeStyle=OL; x.lineWidth=Math.max(1.5,size*0.06);
       x.fillStyle='#D1D3D5'; x.beginPath(); x.ellipse(-r*0.28,-r*0.1,r*0.14,r*0.2,0,0,6.283); x.ellipse(r*0.28,-r*0.1,r*0.14,r*0.2,0,0,6.283); x.fill(); x.fillStyle=OL; x.beginPath(); x.arc(-r*0.28,-r*0.05,r*0.07,0,6.283); x.arc(r*0.28,-r*0.05,r*0.07,0,6.283); x.fill(); x.strokeStyle='#D1D3D5'; x.beginPath(); x.moveTo(-r*0.25,r*0.35); x.lineTo(r*0.25,r*0.35); x.stroke(); x.strokeStyle=OL; break; }
   }
@@ -327,7 +359,10 @@ const ENEMIES = {
   boss1:{ emoji:'💉', hp:1500, speed:1.3, dmg:30, size:70, xp:60, score:300, boss:true, name:'주사기 대마왕' },
   boss2:{ emoji:'👻', hp:5000, speed:1.5, dmg:40, size:90, xp:150, score:900, boss:true, name:'분리불안의 그림자' },
   boss3:{ emoji:'🌑', hp:12000, speed:1.7, dmg:55, size:110, xp:400, score:3000, boss:true, name:'지루함의 끝' },
+  boss4:{ emoji:'🧶', hp:7000, speed:1.0, dmg:38, size:100, xp:200, score:1200, boss:true, name:'털뭉치 괴수', split:true },
+  boss5:{ emoji:'🌀', hp:9000, speed:2.3, dmg:45, size:88, xp:260, score:1800, boss:true, name:'드라이기 폭풍', charger:true },
 };
+const BOSS_ORDER=['boss1','boss4','boss2','boss5','boss3'];
 
 // ====================== 게임 상태 ======================
 let G = null, keys = {}, paused = false, running = false, lastT = 0;
@@ -346,25 +381,28 @@ function anyBest(fn){ return Object.values(SAVE.best).some(m=>Object.values(m).s
 
 // 모드
 const MODES = {
-  classic:{ name:'클래식', emoji:'🏠', desc:'10분 생존, 보스 3·6·9분', time:600, rate:1, bosses:[[180,'boss1'],[360,'boss2'],[540,'boss3']], reward:1 },
-  rush:{ name:'러시', emoji:'⚡', desc:'3분 압축전, 적 3배·성장 빠름', time:180, rate:3, bosses:[[60,'boss1'],[120,'boss2'],[165,'boss3']], reward:1.3, xpMul:2.2, hpScale:0.5,
-    unlock:{ desc:'클래식 5분 생존', check:()=>Object.values(bestOf('classic')).some(b=>b.time>=300) } },
-  endless:{ name:'무한', emoji:'♾️', desc:'끝없이 강해지는 적, 3분마다 보스', time:Infinity, rate:1, bosses:'loop', reward:1.5, scaleMul:1.6,
-    unlock:{ desc:'클래식 10분 생존(승리)', check:()=>Object.values(bestOf('classic')).some(b=>b.win) } },
+  classic:{ name:'클래식', emoji:'🏠', desc:'10분 생존 · 보스 5마리 (3분부터 90초마다)', time:600, rate:1, bosses:[[180,'boss1'],[270,'boss4'],[360,'boss2'],[450,'boss5'],[540,'boss3']], reward:1 },
+  endless:{ name:'무한 (랭킹전)', emoji:'🏆', desc:'끝없이 강해지는 적 · 생존 시간으로 전국 순위', time:Infinity, rate:1, bosses:'loop', reward:1.4, scaleMul:1.6, ranked:true },
 };
+// 이벤트 (무한 모드 랭킹전)
+const EVENT = { until:new Date('2026-10-20T23:59:59+09:00'), prize:'댕비앙 1박스', winners:5, announce:'10월 21일 펫투데이 인스타그램에 닉네임 발표 → DM으로 배송지 안내',
+  get active(){ return Date.now()<=this.until.getTime(); }, get dday(){ return Math.max(0,Math.ceil((this.until.getTime()-Date.now())/86400000)); } };
+// 랭킹 서버 (Supabase) — url·key 비어 있으면 랭킹 탭은 '준비 중'
+const LB_CONFIG = { url:'', key:'' };
+const SITE_URL = 'https://petodayofficial-arch.github.io/petoday-survivor/';
 let curMode='classic', curPet=0, trainPet='pari';
 
 // 사료 상점 (전 캐릭터 공통)
 const PERKS = {
-  php:{ name:'든든한 밥그릇', emoji:'❤️', max:5, desc:'시작 최대 체력 +8%/Lv', cost:l=>60+l*50 },
-  pdmg:{ name:'산책 근육', emoji:'💪', max:5, desc:'모든 피해 +6%/Lv', cost:l=>80+l*70 },
-  pspd:{ name:'튼튼한 발톱', emoji:'🐾', max:4, desc:'이동속도 +5%/Lv', cost:l=>70+l*60 },
-  pmag:{ name:'코 감각', emoji:'👃', max:4, desc:'간식 획득 범위 +20%/Lv', cost:l=>50+l*40 },
-  pcd:{ name:'아침 스트레칭', emoji:'🤸', max:4, desc:'공격 쿨타임 -5%/Lv', cost:l=>90+l*80 },
-  plv:{ name:'유치원 졸업', emoji:'🎓', max:3, desc:'시작 레벨 +1/Lv (강화 카드 먼저 선택)', cost:l=>150+l*150 },
-  previve:{ name:'주인의 품', emoji:'🏠', max:1, desc:'쓰러져도 1회 부활 (체력 50%)', cost:l=>500 },
-  pkibble:{ name:'사료 할인', emoji:'🥣', max:3, desc:'사료 획득량 +15%/Lv', cost:l=>120+l*120 },
-  pburst:{ name:'간식 응원', emoji:'✨', max:3, desc:'필살기 게이지 충전 +20%/Lv', cost:l=>100+l*100 },
+  php:{ name:'든든한 밥그릇', emoji:'❤️', max:5, desc:'시작 최대 체력 +8%/Lv', cost:l=>150+l*150 },
+  pdmg:{ name:'산책 근육', emoji:'💪', max:5, desc:'모든 피해 +6%/Lv', cost:l=>200+l*200 },
+  pspd:{ name:'튼튼한 발톱', emoji:'🐾', max:4, desc:'이동속도 +5%/Lv', cost:l=>160+l*160 },
+  pmag:{ name:'코 감각', emoji:'👃', max:4, desc:'간식 획득 범위 +20%/Lv', cost:l=>120+l*120 },
+  pcd:{ name:'아침 스트레칭', emoji:'🤸', max:4, desc:'공격 쿨타임 -5%/Lv', cost:l=>220+l*220 },
+  plv:{ name:'유치원 졸업', emoji:'🎓', max:3, desc:'시작 레벨 +1/Lv (강화 카드 먼저 선택)', cost:l=>400+l*400 },
+  previve:{ name:'주인의 품', emoji:'🏠', max:1, desc:'쓰러져도 1회 부활 (체력 50%)', cost:l=>1500 },
+  pkibble:{ name:'사료 할인', emoji:'🥣', max:3, desc:'사료 획득량 +15%/Lv', cost:l=>300+l*300 },
+  pburst:{ name:'간식 응원', emoji:'✨', max:3, desc:'필살기 게이지 충전 +20%/Lv', cost:l=>250+l*250 },
 };
 // 훈련 (캐릭터별, 츄르)
 const TRAIN = {
@@ -400,7 +438,7 @@ function spawner(dt){
   while(G.spawnAcc>=1 && G.enemies.length<cap){ G.spawnAcc -= 1; let type='flea'; const r=Math.random();
     if(t>45 && r<0.35) type='tick'; if(t>100 && r<0.18) type='fur'; if(t>160 && r<0.09) type='bat'; if(t>220 && r<0.05) type='vac'; if(t>320 && r<0.03) type='cloud'; spawnEnemy(type); }
   if(Math.floor(t)%60===30 && !G.bossSpawned['wave'+Math.floor(t)]){ G.bossSpawned['wave'+Math.floor(t)]=1; const a0 = rand(0,Math.PI*2); for(let i=0;i<40;i++){ const a=a0+i*0.15, r=Math.max(W,H)*0.6; spawnEnemy(t>200?'bat':'flea', G.p.x+Math.cos(a)*r, G.p.y+Math.sin(a)*r); } toast('🦇 떼가 몰려옵니다!'); }
-  if(G.M.bosses==='loop'){ const n=Math.floor(t/180); if(n>=1 && !G.bossSpawned['loop'+n]){ G.bossSpawned['loop'+n]=1; const bk=['boss1','boss2','boss3'][(n-1)%3]; spawnEnemy(bk); const b=G.enemies[G.enemies.length-1]; b.hp=b.maxHp=b.maxHp*(1+(n-1)*0.6); toast('⚠️ '+ENEMIES[bk].name+' 등장! ('+n+'번째)'); G.shake=12; SFX.boss(); } }
+  if(G.M.bosses==='loop'){ const n=Math.floor(t/150); if(n>=1 && !G.bossSpawned['loop'+n]){ G.bossSpawned['loop'+n]=1; const bk=BOSS_ORDER[(n-1)%BOSS_ORDER.length]; spawnEnemy(bk); const b=G.enemies[G.enemies.length-1]; b.hp=b.maxHp=b.maxHp*(1+(n-1)*0.5); toast('⚠️ '+ENEMIES[bk].name+' 등장! ('+n+'번째)'); G.shake=12; SFX.boss(); } }
   else for(const [bt,bk] of G.M.bosses){ if(t>=bt && !G.bossSpawned[bk]){ G.bossSpawned[bk]=1; spawnEnemy(bk); toast('⚠️ '+ENEMIES[bk].name+' 등장!'); G.shake=12; SFX.boss(); } }
 }
 
@@ -410,6 +448,7 @@ function hurt(e, dmg, kbx, kby, kbForce){ e.hp -= dmg; e.hit = 0.12; if(kbForce 
   G.texts.push({x:e.x+rand(-8,8), y:e.y-e.size/2, v:Math.round(dmg), t:0.6, crit:dmg>=60}); if(e.hp<=0) killEnemy(e); }
 function killEnemy(e){ if(e.dead) return; e.dead=true; G.kills++; G.score+=e.score; SFX.pop(e.boss); G.p.burst = Math.min(G.p.burstMax, G.p.burst + (e.boss?40:0.7)*stat().burstGain); if(e.boss){ G.bossKills++; G.churuEarned+=2; }
   if(!e.boss && ['tick','fur','cloud','vac'].includes(e.type) && Math.random()<0.02 && G.items.length<3) G.items.push({x:e.x,y:e.y,t:20});
+  if(e.boss && ENEMIES[e.type].split){ for(let i=0;i<8;i++){ const a=i/8*6.283; spawnEnemy('fur', e.x+Math.cos(a)*60, e.y+Math.sin(a)*60); } toast('🧶 털뭉치가 흩어집니다!'); }
   const xm=G.M.xpMul||1; const n = e.boss? 12 : 1; for(let i=0;i<n;i++) G.gems.push({x:e.x+rand(-20,20), y:e.y+rand(-20,20), v:(e.boss? Math.ceil(e.xp/12): e.xp)*xm, big:e.boss});
   G.fx.push({x:e.x,y:e.y,t:0.35,type:'pop',r:e.size, etype:e.type}); if(e.boss){ toast('🏆 '+e.name+' 격파!'); G.shake=16; } }
 function beamHit(a,len,dmg,width){ const p=G.p; for(const o of G.enemies){ const dx=o.x-p.x,dy=o.y-p.y; const proj=dx*Math.cos(a)+dy*Math.sin(a); if(proj>0&&proj<len){ const perp=Math.abs(-dx*Math.sin(a)+dy*Math.cos(a)); if(perp<width+o.size/2) hurt(o,dmg,0,0,0); } } }
@@ -563,7 +602,7 @@ function endGame(){ running=false; $('hud').style.display='none'; const p=G.p; b
   // 기록
   const mb=SAVE.best[G.mode]||(SAVE.best[G.mode]={}); const prev=mb[G.pet.id]||{time:0,score:0}; const nb={time:Math.max(prev.time,G.t),score:Math.max(prev.score,G.score),win:prev.win||G.win}; mb[G.pet.id]=nb;
   // 보상: 사료 = 점수/8 + 생존 10초당 2, 모드 배율, 승리 보너스 / 츄르 = 1분당 1 + 보스당 2
-  const kib=Math.round((G.score/2.5 + G.t/10*6 + (G.win?500:0))*G.M.reward*(1+0.15*PK('pkibble')));
+  const kib=Math.round((G.score/4 + G.t/10*4 + (G.win?300:0))*G.M.reward*(1+0.15*PK('pkibble')));
   const chu=Math.floor(G.t/60)+G.churuEarned+(G.win?3:0);
   SAVE.kibble+=kib; SAVE.churu[G.pet.id]=(SAVE.churu[G.pet.id]||0)+chu; SAVE.runs++; SAVE.totalTime+=G.t; saveNow();
   $('resultImg').src = SP+G.pet.img[G.win?'love':'down']+'.png';
@@ -572,18 +611,54 @@ function endGame(){ running=false; $('hud').style.display='none'; const p=G.p; b
   $('resultStats').innerHTML = `<div>모드</div><b>${G.M.emoji} ${G.M.name}</b><div>생존 시간</div><b>${fmt(G.t)}</b><div>처치</div><b>${G.kills}</b><div>점수</div><b>${G.score.toLocaleString()}</b><div>도달 레벨</div><b>Lv ${p.lv}</b><div>최종 형태</div><b>${G.pet.evoNames[p.evo]}</b><div>최고 기록</div><b>${fmt(nb.time)} / ${nb.score.toLocaleString()}</b>`;
   $('resultEarn').innerHTML = `획득 &nbsp;🥣 사료 +${kib.toLocaleString()} &nbsp;·&nbsp; 🧃 ${G.pet.name} 츄르 +${chu}` + (G.waters?` &nbsp;·&nbsp; 💧 댕비앙 ${G.waters}병`:'');
   $('resultPromoText').innerHTML = G.win? `${G.pet.name}도 목이 마를 땐 댕비앙 <small>pH9 프리미엄 알칼리수 ↗</small>` : `지친 ${G.pet.name}에게 댕비앙 한 모금 <small>펫투데이 스마트스토어 ↗</small>`;
+  LAST_RUN={ pet:G.pet.id, mode:G.mode, time:G.t, score:G.score, lv:p.lv, kills:G.kills, submitted:false };
+  const ranked = G.M.ranked && G.t>=30; $('rankBox').style.display = ranked?'':'none';
+  if(ranked){ try{ $('rbNick').value=localStorage.getItem('petoday_surv_nick')||''; }catch(e){} $('rbInsta').value=''; $('rbAgree').checked=false; $('rbSubmit').disabled=false; $('rbSubmit').textContent='등록하기'; $('rbMsg').textContent = lbOn()? (EVENT.active?`10/20까지 TOP ${EVENT.winners}에게 ${EVENT.prize}! 지금 기록: ${fmt(G.t)}`:'이벤트는 끝났지만 순위표에는 계속 올라갑니다.') : '랭킹 서버 준비 중 · 기록은 이 기기에 저장됩니다.'; }
   $('result').classList.add('show'); }
 function togglePause(){ if(!running) return; if($('levelup').classList.contains('show')) return; paused=!paused; $('pause').classList.toggle('show',paused); if(paused){ const w=Object.entries(G.weapons).map(([k,l])=>`${WEAPONS[k].emoji} ${WEAPONS[k].name} Lv${l}`).join('<br>'); const ps=Object.entries(G.passives).map(([k,l])=>`${PASSIVES[k].emoji} ${PASSIVES[k].name} Lv${l}`).join('<br>')||'-'; $('pauseStats').innerHTML=`<div>무기</div><b style="font-size:13px">${w}</b><div>패시브</div><b style="font-size:13px">${ps}</b>`; } else lastT=performance.now(); }
 function backToTitle(){ running=false; paused=false; bgmStop(); ['pause','result','levelup'].forEach(i=>$(i).classList.remove('show')); $('hud').style.display='none'; ctx.clearRect(0,0,W,H); renderTitle(); $('title').classList.add('show'); }
 function pips(lv,max){ let s='<div class="pips">'; for(let i=0;i<max;i++) s+=`<i class="${i<lv?'on':''}"></i>`; return s+'</div>'; }
-function setTab(t){ document.querySelectorAll('.tab').forEach(e=>e.classList.toggle('on',e.dataset.tab===t)); for(const k of ['play','shop','train']) $('tab_'+k).style.display=(k===t?'':'none'); }
+function setTab(t){ document.querySelectorAll('.tab').forEach(e=>e.classList.toggle('on',e.dataset.tab===t)); for(const k of ['play','rank','shop','train']) $('tab_'+k).style.display=(k===t?'':'none'); if(t==='rank') renderRank(); }
+
+// ====================== 랭킹 (Supabase REST) / 공유 ======================
+const lbOn = ()=>!!(LB_CONFIG.url&&LB_CONFIG.key);
+function clientId(){ let id=null; try{ id=localStorage.getItem('petoday_surv_cid'); if(!id){ id=(crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2)+Date.now()); localStorage.setItem('petoday_surv_cid',id); } }catch(e){ id='anon'; } return id; }
+async function lbFetch(path, opt){ const r=await fetch(LB_CONFIG.url.replace(/\/$/,'')+'/rest/v1/'+path, Object.assign({headers:{apikey:LB_CONFIG.key, Authorization:'Bearer '+LB_CONFIG.key, 'Content-Type':'application/json', Prefer:'return=minimal'}}, opt||{})); if(!r.ok) throw new Error('lb '+r.status+' '+(await r.text()).slice(0,120)); return r.status===204?null:r.json(); }
+let LB_CACHE={t:0,rows:[]};
+async function lbTop(n){ if(Date.now()-LB_CACHE.t<15000) return LB_CACHE.rows; const rows=await lbFetch(`leaderboard?select=nickname,pet,time,score,created_at&order=time.desc,score.desc&limit=${n||100}`); LB_CACHE={t:Date.now(),rows}; return rows; }
+async function lbSubmit(e){ await lbFetch('scores',{method:'POST',body:JSON.stringify(e)}); LB_CACHE.t=0; }
+function eventHtml(big){ const on=EVENT.active; const head = on? `<span class="pill">D-${EVENT.dday}</span>무한 모드 랭킹전 · <b>TOP ${EVENT.winners} ${EVENT.prize} 증정</b>` : `무한 모드 랭킹전 <b>종료</b> · 당첨자 발표 확인`;
+  const sub = big? `10월 20일 23:59까지 무한 모드 생존 시간 1~${EVENT.winners}위에게 ${EVENT.prize}를 드립니다.<br>기록이 끝나면 닉네임으로 랭킹에 등록하세요. 당첨 연락을 위해 인스타 아이디를 함께 남기면 좋아요.<br>${EVENT.announce}` : (on?`10/20까지 · 기록 등록은 결과 화면에서 · 탭하면 순위표`:'');
+  return head+(sub?`<small>${sub}</small>`:''); }
+async function renderRank(){ $('eventRules').innerHTML=eventHtml(true); const box=$('lbList'); const myNick=(()=>{try{return localStorage.getItem('petoday_surv_nick')||'';}catch(e){return '';}})();
+  const mine=bestOf('endless'); const myBest=Object.entries(mine).sort((a,b)=>b[1].time-a[1].time)[0]; $('lbMine').textContent = myBest? `내 무한 모드 최고 기록: ${fmt(myBest[1].time)} (${PETS.find(p=>p.id===myBest[0])?.name||''})` : '아직 무한 모드 기록이 없습니다. 한 판 도전해 보세요!';
+  if(!lbOn()){ box.innerHTML='<div class="empty">🛠 랭킹 서버 준비 중입니다. 기록은 기기에 저장되고, 서버가 열리면 등록할 수 있어요.</div>'; return; }
+  box.innerHTML='<div class="empty">불러오는 중…</div>';
+  try{ const rows=await lbTop(50); if(!rows.length){ box.innerHTML='<div class="empty">아직 등록된 기록이 없습니다. 첫 번째 주인공이 되어 보세요!</div>'; return; }
+    box.innerHTML=rows.map((r,i)=>`<div class="lr ${i<EVENT.winners?'top':''} ${r.nickname===myNick?'me':''}"><span class="rk">${i+1}</span><span class="nk">${esc(r.nickname)}</span><span class="pt">${PETS.find(p=>p.id===r.pet)?.name||''} · ${Number(r.score).toLocaleString()}점</span><span class="tm">${fmt(r.time)}</span></div>`).join('');
+  }catch(e){ box.innerHTML='<div class="empty">순위를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.</div>'; console.warn(e); } }
+function esc(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+let LAST_RUN=null;
+async function submitScore(){ const r=LAST_RUN; if(!r||r.submitted) return; const nick=$('rbNick').value.trim(), insta=$('rbInsta').value.trim().replace(/^@/,''); const msg=$('rbMsg');
+  if(nick.length<2||nick.length>10){ msg.textContent='닉네임은 2~10자로 입력해 주세요.'; return; } if(/[<>]/.test(nick)){ msg.textContent='닉네임에 < > 는 쓸 수 없습니다.'; return; } if(!$('rbAgree').checked){ msg.textContent='안내 사항에 동의해 주세요.'; return; }
+  if(!lbOn()){ msg.textContent='랭킹 서버가 아직 열리지 않았습니다. 기록은 이 기기에 저장돼 있어요.'; return; }
+  $('rbSubmit').disabled=true; msg.textContent='등록 중…';
+  try{ await lbSubmit({ nickname:nick, contact:insta||null, pet:r.pet, time:Math.floor(r.time), score:Math.round(r.score), lv:r.lv, kills:r.kills, client_id:clientId(), version:'v4' }); r.submitted=true; try{ localStorage.setItem('petoday_surv_nick',nick); }catch(e){}
+    let rankTxt=''; try{ const rows=await lbTop(100); const idx=rows.findIndex(x=>x.nickname===nick); rankTxt = idx>=0? ` 현재 ${idx+1}위!`:' (100위 밖)'; }catch(e){}
+    msg.innerHTML=`✅ 등록 완료!${rankTxt} <a href="#" onclick="backToTitle();setTab('rank');return false;">순위표 보기</a>`; $('rbSubmit').textContent='등록됨'; SFX.buy();
+  }catch(e){ console.warn(e); msg.textContent='등록에 실패했습니다. 잠시 후 다시 시도해 주세요.'; $('rbSubmit').disabled=false; } }
+async function shareText(text){ const url=SITE_URL; if(navigator.share){ try{ await navigator.share({title:'펫투데이 펫 서바이버', text, url}); return; }catch(e){ if(e&&e.name==='AbortError') return; } }
+  try{ await navigator.clipboard.writeText(text+' '+url); toast('📋 링크 복사됨! 카톡에 붙여넣기'); }catch(e){ prompt('아래 링크를 복사해 공유하세요', text+' '+url); } }
+function shareGame(){ shareText('🐾 펫투데이 펫 서바이버! 무한 모드 TOP5는 댕비앙 1박스 🎁 같이 해보자'); }
+function shareResult(){ const r=LAST_RUN; if(!r) return shareGame(); shareText(`🐾 나 ${PETS.find(p=>p.id===r.pet).name}(으)로 ${r.mode==='endless'?'무한 모드':'클래식'} ${fmt(r.time)} 버텼다! 너도 도전해봐 (TOP5는 댕비앙 🎁)`); }
 function setMode(k){ const M=MODES[k]; if(M.unlock&&!M.unlock.check()){ toast('🔒 '+M.unlock.desc); return; } curMode=k; renderTitle(); }
 function setTrainPet(id){ trainPet=id; renderTitle(); }
 function buyPerk(k){ const P=PERKS[k], lv=PK(k); const c=P.cost(lv); if(lv>=P.max||SAVE.kibble<c) return; SFX.buy(); SAVE.kibble-=c; SAVE.perks[k]=lv+1; saveNow(); renderTitle(); toast(P.emoji+' '+P.name+' Lv'+(lv+1)); }
 function buyTrain(k){ const T=TRAIN[k], lv=TK(trainPet,k); const c=T.cost(lv); const have=SAVE.churu[trainPet]||0; if(lv>=T.max||have<c) return; SFX.buy(); SAVE.churu[trainPet]=have-c; (SAVE.training[trainPet]=SAVE.training[trainPet]||{})[k]=lv+1; saveNow(); renderTitle(); toast(T.emoji+' '+T.name+' Lv'+(lv+1)); }
 function renderTitle(){ const best=bestOf(curMode);
   $('wKibble').textContent=SAVE.kibble.toLocaleString(); $('wChuru').textContent=Object.values(SAVE.churu).reduce((a,b)=>a+b,0);
-  $('modeList').innerHTML = Object.entries(MODES).map(([k,M])=>{ const locked=M.unlock&&!M.unlock.check(); return `<div class="mode ${k===curMode?'on':''} ${locked?'locked':''}" onclick="setMode('${k}')"><b>${M.emoji} ${M.name}</b><small>${locked?'🔒 '+M.unlock.desc:M.desc}</small></div>`; }).join('');
+  $('eventBanner').innerHTML=eventHtml(false);
+  $('modeList').innerHTML = Object.entries(MODES).map(([k,M])=>{ const locked=M.unlock&&!M.unlock.check(); return `<div class="mode ${k===curMode?'on':''} ${locked?'locked':''}" onclick="setMode('${k}')"><b>${M.emoji} ${M.name}${M.ranked&&EVENT.active?' <span style="background:#61CA84;color:#1D1D1B;border-radius:999px;padding:1px 8px;font-size:10px">EVENT</span>':''}</b><small>${locked?'🔒 '+M.unlock.desc:M.desc}</small></div>`; }).join('');
   $('petCards').innerHTML = PETS.map((p,i)=>{ const b=best[p.id]; const locked=p.unlock&&!p.unlock.check(); const tr=SAVE.training[p.id]; const tl=tr?Object.values(tr).reduce((a,b)=>a+b,0):0; return `<div class="card ${locked?'locked':''}" onclick="startGame(${i})"><img src="${SP}${p.img.hello}.png" alt="${p.name}"><div class="breed">${p.breed}</div><div class="name">${p.name}</div><div class="desc">${p.desc}<br><span style="color:var(--blue)">${p.burstDesc}</span></div><div class="meta"><div class="tag">${p.tag}</div>${tl?`<div class="tag g">훈련 ${tl}</div>`:''}${b?`<div class="desc">${MODES[curMode].name} 최고 ${fmt(b.time)}${b.win?' 🏆':''}</div>`:''}</div>${locked?`<div class="lock">🔒<br>${p.unlock.desc}</div>`:''}</div>`; }).join('');
   $('shopList').innerHTML = Object.entries(PERKS).map(([k,P])=>{ const lv=PK(k), maxed=lv>=P.max, c=P.cost(lv); return `<div class="item"><div class="ic">${P.emoji}</div><div><div class="nm">${P.name} <span style="color:var(--blue)">Lv${lv}</span></div><div class="ds">${P.desc}</div>${pips(lv,P.max)}</div><button onclick="buyPerk('${k}')" ${maxed||SAVE.kibble<c?'disabled':''}>${maxed?'MAX':'🥣 '+c}</button></div>`; }).join('');
   $('trainPets').innerHTML = PETS.map(p=>`<div class="tp ${p.id===trainPet?'on':''}" onclick="setTrainPet('${p.id}')">${p.name} 🧃${SAVE.churu[p.id]||0}</div>`).join('');
