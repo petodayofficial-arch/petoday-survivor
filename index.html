@@ -92,7 +92,7 @@
     #petCards .card .lock{position:absolute;inset:0;border-radius:20px;background:rgba(243,244,246,.85);font-size:12px;}
     #upCards .card{flex:1 1 100%;max-width:none;display:flex;align-items:center;gap:12px;text-align:left;padding:10px 14px;} #upCards .card .emo{font-size:36px;} #upCards .card .emo img{height:44px!important;} #upCards .card .name{margin-top:0;font-size:15px;} #upCards .card .desc{margin-top:2px;} #upCards .card .tag{margin:0 0 0 auto;}
     .promo{flex-wrap:wrap;justify-content:center;border-radius:16px;text-align:center;font-size:11px;} .promo small{flex-basis:100%;}
-    .shop{grid-template-columns:1fr;} .stats{font-size:13px;}
+    .shop,.shop.shop2{grid-template-columns:1fr;} .stats{font-size:13px;}
     .hud{left:8px;right:8px;top:8px;gap:4px;} .row{font-size:12px;} .row span{padding:3px 8px;} #timer{font-size:18px;} #toast{font-size:24px;top:16%;}
   }
   .tab.on{background:var(--blue);color:#fff;}
@@ -105,6 +105,7 @@
   .mode small{color:#777;font-weight:300;}
   .mode.locked{opacity:.5;cursor:not-allowed;}
   .shop{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;text-align:left;}
+  .shop.shop2{grid-template-columns:repeat(2,minmax(0,1fr));max-width:560px;margin:0 auto;}
   .item{background:var(--bg);border-radius:16px;padding:12px 14px;display:flex;align-items:center;gap:10px;}
   .item .ic{font-size:28px;}
   .item .nm{font-weight:700;font-size:14px;}
@@ -194,7 +195,7 @@
       <div id="tab_train" style="display:none">
         <div class="sub">캐릭터별 훈련. 츄르는 그 캐릭터로 플레이한 시간과 보스 처치로 받습니다.</div>
         <div class="trainpets" id="trainPets"></div>
-        <div class="shop" id="trainList"></div>
+        <div class="shop shop2" id="trainList"></div>
         <div class="rankbox" id="inviteBoxTrain" style="margin-top:14px">
           <div class="rb-title">👫 친구 초대 보상</div>
           <div class="help" style="margin-top:0">내 초대 링크로 들어온 친구가 <b>3분 이상 플레이하고 닉네임을 등록</b>하면, 나에게 <b>🥣 사료 1,000 + 🧃 츄르 5</b>이 들어옵니다. (친구 1명당 1회)</div>
