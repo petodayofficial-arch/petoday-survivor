@@ -403,7 +403,7 @@ function enemyArt(type, size){
 function drawEnemy(type, size, x, y, flip, alpha, e){ const sp=enemyArt(type,size); ctx.save(); ctx.translate(x,y); if(flip) ctx.scale(-1,1); if(e&&!e.boss){ const w=Math.sin((G?G.t:0)*10+x*0.01)*0.08; ctx.rotate(w); } if(alpha!=null) ctx.globalAlpha=alpha; ctx.drawImage(sp.c,-sp.s/2,-sp.s/2,sp.s,sp.s); ctx.restore(); }
 
 // ====================== 데이터 정의 ======================
-const SP = 'assets/sprites/'; const SPRITE_VER='7';
+const SP = 'assets/sprites/'; const SPRITE_VER='8';
 const PETS = [
   { id:'pari', name:'파리', breed:'SPITZ', walkFacesLeft:true, hp:115, speed:3.6, weapon:'soccer', burst:'spotlight',
     img:{ walk:'pari_walk', hello:'pari_hello', love:'pari_love', down:'pari_down', burst:'pari_jump', sit:'pari_sit' },
