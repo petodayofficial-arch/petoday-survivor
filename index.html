@@ -195,6 +195,12 @@
         <div class="sub">캐릭터별 훈련. 츄르는 그 캐릭터로 플레이한 시간과 보스 처치로 받습니다.</div>
         <div class="trainpets" id="trainPets"></div>
         <div class="shop" id="trainList"></div>
+        <div class="rankbox" id="inviteBoxTrain" style="margin-top:14px">
+          <div class="rb-title">👫 친구 초대 보상</div>
+          <div class="help" style="margin-top:0">내 초대 링크로 들어온 친구가 <b>3분 이상 플레이하고 닉네임을 등록</b>하면, 나에게 <b>🥣 사료 1,000 + 🧃 츄르 5</b>이 들어옵니다. (친구 1명당 1회)</div>
+          <div id="inviteMineTrain" class="help"></div>
+        </div>
+        <button class="btn ghost" onclick="shareGame()">📣 친구에게 공유</button>
       </div>
       <a class="promo" href="https://smartstore.naver.com/petodaystore" target="_blank" rel="noopener"><img src="assets/sprites/item_dangvian.png" alt=""><img src="assets/sprites/item_poopbag_box.png" alt=""><img src="assets/sprites/nm_pouch.png" alt="">게임 속 댕비앙 · 배변봉투 · 댕댕야시장은 진짜 있어요 <small>펫투데이 스마트스토어 ↗</small></a>
       <div class="footer">© PETODAY · FAN GAME PROTOTYPE</div>
@@ -795,7 +801,7 @@ function endGame(){ running=false; $('hud').style.display='none'; const p=G.p; b
 function togglePause(){ if(!running) return; if($('levelup').classList.contains('show')) return; paused=!paused; $('pause').classList.toggle('show',paused); if(paused){ const w=Object.entries(G.weapons).map(([k,l])=>`${WEAPONS[k].emoji} ${WEAPONS[k].name} Lv${l}`).join('<br>'); const ps=Object.entries(G.passives).map(([k,l])=>`${PASSIVES[k].emoji} ${PASSIVES[k].name} Lv${l}`).join('<br>')||'-'; $('pauseStats').innerHTML=`<div>무기</div><b style="font-size:13px">${w}</b><div>패시브</div><b style="font-size:13px">${ps}</b>`; } else lastT=performance.now(); }
 function backToTitle(){ running=false; paused=false; bgmStop(); ['pause','result','levelup'].forEach(i=>$(i).classList.remove('show')); $('hud').style.display='none'; ctx.clearRect(0,0,W,H); renderTitle(); $('title').classList.add('show'); }
 function pips(lv,max){ let s='<div class="pips">'; for(let i=0;i<max;i++) s+=`<i class="${i<lv?'on':''}"></i>`; return s+'</div>'; }
-function setTab(t){ document.querySelectorAll('.tab').forEach(e=>e.classList.toggle('on',e.dataset.tab===t)); for(const k of ['play','rank','shop','train']) $('tab_'+k).style.display=(k===t?'':'none'); if(t==='rank'){ renderRank(); renderInvite(); } if(t==='shop') renderInvite(); }
+function setTab(t){ document.querySelectorAll('.tab').forEach(e=>e.classList.toggle('on',e.dataset.tab===t)); for(const k of ['play','rank','shop','train']) $('tab_'+k).style.display=(k===t?'':'none'); if(t==='rank'){ renderRank(); renderInvite(); } if(t==='shop'||t==='train') renderInvite(); }
 
 // ====================== 랭킹 (Supabase REST) / 공유 ======================
 const lbOn = ()=>!!(LB_CONFIG.url&&LB_CONFIG.key);
@@ -838,7 +844,7 @@ async function refClaim(){ const me=REF.mine; if(!me||!lbOn()) return; try{ cons
     if(diff>0){ SAVE.kibble+=1000*diff; SAVE.churu[curPetId()]=(SAVE.churu[curPetId()]||0)+5*diff; saveNow(); REF.claimed=n; toast(`👫 친구 ${diff}명 초대 보상! 🥣 +${1000*diff} 🧃 +${5*diff}`); SFX.buy(); renderTitle(); }
     return n; }catch(e){ console.warn(e); } }
 function curPetId(){ return (PETS[curPet]||PETS[0]).id; }
-async function renderInvite(){ const me=REF.mine; const list=$('inviteList'); const box={ set innerHTML(v){ $('inviteMine').innerHTML=v; const b2=$('inviteMineShop'); if(b2) b2.innerHTML=v; } };
+async function renderInvite(){ const me=REF.mine; const list=$('inviteList'); const box={ set innerHTML(v){ $('inviteMine').innerHTML=v; for(const id of ['inviteMineShop','inviteMineTrain']){ const b=$(id); if(b) b.innerHTML=v; } } };
   if(!me){ box.innerHTML='무한 모드에서 한 판 하고 <b>닉네임을 등록</b>하면 내 초대 링크가 생깁니다.'; list.innerHTML=''; return; }
   box.innerHTML=`<div style="margin-top:6px">내 초대 링크 <span style="font-family:Montserrat;font-weight:800;color:var(--blue);word-break:break-all">${esc(SITE_URL+"?ref="+REF.mine)}</span></div><div style="margin-top:6px"><button class="btn" style="margin:0;padding:8px 14px;font-size:13px" onclick="copyInvite()">📋 링크 복사</button> <span id="inviteCount" style="margin-left:8px">초대 ${REF.claimed}명 · 받은 보상 🥣 ${1000*REF.claimed}</span></div>`;
   if(!lbOn()){ list.innerHTML=''; return; }
