@@ -650,7 +650,7 @@ function endGame(){ running=false; $('hud').style.display='none'; const p=G.p; b
   // 기록
   const mb=SAVE.best[G.mode]||(SAVE.best[G.mode]={}); const prev=mb[G.pet.id]||{time:0,score:0}; const nb={time:Math.max(prev.time,G.t),score:Math.max(prev.score,G.score),win:prev.win||G.win}; mb[G.pet.id]=nb;
   // 보상: 사료 = 점수/8 + 생존 10초당 2, 모드 배율, 승리 보너스 / 츄르 = 1분당 1 + 보스당 2
-  const kib=Math.round((G.score/5 + G.t/10*3.5 + (G.win?250:0))*G.M.reward*(1+0.15*PK('pkibble')));
+  const kib=Math.round((G.score/8 + G.t/10*5 + (G.win?300:0))*G.M.reward*(1+0.15*PK('pkibble')));
   const chu=Math.floor(G.t/60)+G.churuEarned+(G.win?3:0);
   SAVE.kibble+=kib; SAVE.churu[G.pet.id]=(SAVE.churu[G.pet.id]||0)+chu; SAVE.runs++; SAVE.totalTime+=G.t; saveNow();
   $('resultImg').src = SP+G.pet.img[G.win?'love':'down']+'.png';
