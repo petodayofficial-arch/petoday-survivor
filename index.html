@@ -9,7 +9,6 @@
 <meta property="og:site_name" content="PETODAY">
 <meta property="og:title" content="[뱀서류 게임] 펫 서바이버 · 10분 버티면 댕비앙 제품 받을지도?">
 <meta property="og:description" content="설치 없이 바로 플레이. 오래 버틴 5명한테 강아지 생수 한 박스.">
-<meta property="og:url" content="https://petodayofficial-arch.github.io/petoday-survivor/">
 <meta property="og:image" content="https://petodayofficial-arch.github.io/petoday-survivor/assets/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -189,7 +188,7 @@
         <div class="trainpets" id="trainPets"></div>
         <div class="shop" id="trainList"></div>
       </div>
-      <a class="promo" href="https://smartstore.naver.com/petodaystore" target="_blank" rel="noopener"><img src="assets/sprites/item_dangvian.png" alt=""><img src="assets/sprites/item_poopbag_box.png" alt="">게임 속 댕비앙 · 배변봉투는 진짜 있어요 <small>펫투데이 스마트스토어 ↗</small></a>
+      <a class="promo" href="https://smartstore.naver.com/petodaystore" target="_blank" rel="noopener"><img src="assets/sprites/item_dangvian.png" alt=""><img src="assets/sprites/item_poopbag_box.png" alt=""><img src="assets/sprites/nm_pouch.png" alt="">게임 속 댕비앙 · 배변봉투 · 댕댕야시장은 진짜 있어요 <small>펫투데이 스마트스토어 ↗</small></a>
       <div class="footer">© PETODAY · FAN GAME PROTOTYPE</div>
     </div>
   </div>
@@ -414,15 +413,15 @@ let curMode='classic', curPet=0, trainPet='pari';
 
 // 사료 상점 (전 캐릭터 공통)
 const PERKS = {
-  php:{ name:'든든한 밥그릇', emoji:'❤️', max:5, desc:'시작 최대 체력 +8%/Lv', cost:l=>220+l*220 },
-  pdmg:{ name:'산책 근육', emoji:'💪', max:5, desc:'모든 피해 +6%/Lv', cost:l=>300+l*300 },
-  pspd:{ name:'튼튼한 발톱', emoji:'🐾', max:4, desc:'이동속도 +5%/Lv', cost:l=>240+l*240 },
-  pmag:{ name:'코 감각', emoji:'👃', max:4, desc:'간식 획득 범위 +20%/Lv', cost:l=>180+l*180 },
-  pcd:{ name:'아침 스트레칭', emoji:'🤸', max:4, desc:'공격 쿨타임 -5%/Lv', cost:l=>330+l*330 },
-  plv:{ name:'유치원 졸업', emoji:'🎓', max:3, desc:'시작 레벨 +1/Lv (강화 카드 먼저 선택)', cost:l=>600+l*600 },
-  previve:{ name:'주인의 품', emoji:'🏠', max:1, desc:'쓰러져도 1회 부활 (체력 50%)', cost:l=>2200 },
-  pkibble:{ name:'사료 할인', emoji:'🥣', max:3, desc:'사료 획득량 +15%/Lv', cost:l=>450+l*450 },
-  pburst:{ name:'간식 응원', emoji:'✨', max:3, desc:'필살기 게이지 충전 +20%/Lv', cost:l=>380+l*380 },
+  php:{ name:'든든한 밥그릇', emoji:'❤️', max:5, desc:'시작 최대 체력 +8%/Lv', cost:l=>440+l*440 },
+  pdmg:{ name:'산책 근육', emoji:'💪', max:5, desc:'모든 피해 +6%/Lv', cost:l=>600+l*600 },
+  pspd:{ name:'튼튼한 발톱', emoji:'🐾', max:4, desc:'이동속도 +5%/Lv', cost:l=>480+l*480 },
+  pmag:{ name:'코 감각', emoji:'👃', max:4, desc:'간식 획득 범위 +20%/Lv', cost:l=>360+l*360 },
+  pcd:{ name:'아침 스트레칭', emoji:'🤸', max:4, desc:'공격 쿨타임 -5%/Lv', cost:l=>660+l*660 },
+  plv:{ name:'유치원 졸업', emoji:'🎓', max:3, desc:'시작 레벨 +1/Lv (강화 카드 먼저 선택)', cost:l=>1200+l*1200 },
+  previve:{ name:'주인의 품', emoji:'🏠', max:1, desc:'쓰러져도 1회 부활 (체력 50%)', cost:l=>4400 },
+  pkibble:{ name:'사료 할인', emoji:'🥣', max:3, desc:'사료 획득량 +15%/Lv', cost:l=>900+l*900 },
+  pburst:{ name:'간식 응원', emoji:'✨', max:3, desc:'필살기 게이지 충전 +20%/Lv', cost:l=>760+l*760 },
 };
 // 훈련 (캐릭터별, 츄르)
 const TRAIN = {
@@ -439,13 +438,22 @@ function newGame(pet, modeKey){
   const hp=Math.round(pet.hp*(1+0.08*PK('php'))*(1+0.1*(tr.thp||0)));
   G = { pet, mode:modeKey, M:mode, t:0, kills:0, score:0, shake:0, revives:PK('previve'), churuEarned:0, bossKills:0,
     p:{ x:0,y:0, hp, maxHp:hp, speed:pet.speed*(1+0.05*PK('pspd')), lv:1, xp:0, xpNext:10, evo:0, face:1, inv:0, burst:0, burstMax:100, burstActive:0, burstKind:null, dmgMul:1 },
-    weapons:{ [pet.weapon]:1+(tr.tweapon||0) }, passives:{}, cd:{}, items:[], mines:[], nextWater:25, waters:0, enemies:[], bullets:[], gems:[], fx:[], texts:[], bossSpawned:{}, spawnAcc:0, win:false, pendingLv:PK('plv') };
+    weapons:{ [pet.weapon]:1+(tr.tweapon||0) }, passives:{}, cd:{}, items:[], mines:[], nextWater:25, waters:0, market:null, nextMarket:120, snacksEaten:0, enemies:[], bullets:[], gems:[], fx:[], texts:[], bossSpawned:{}, spawnAcc:0, win:false, pendingLv:PK('plv') };
   updateHud(); $('petname').textContent = pet.name+' · '+pet.breed+' · '+mode.name;
 }
 function stat(){ const ps=G.passives; const tr=SAVE.training[G.pet.id]||{}; return {
   hpMul:(1+0.2*(ps.hp||0))*(1+0.08*PK('php'))*(1+0.1*(tr.thp||0)), spd:(1+0.1*(ps.spd||0))*(G.p.hydrate>0?1.3:1), mag:60*(1+0.35*(ps.mag||0))*(1+0.2*PK('pmag')),
   dmg:(1+0.12*(ps.dmg||0))*(1+0.25*G.p.evo)*G.p.dmgMul*(1+0.06*PK('pdmg')), cd:Math.pow(0.92,(ps.cd||0))*Math.pow(0.95,PK('pcd')),
   area:(1+0.12*(ps.area||0))*(1+0.15*G.p.evo)*(1+0.08*(tr.tarea||0)), regen:(ps.regen||0), burstGain:1+0.2*PK('pburst'), burstPow:1+0.15*(tr.tburst||0) }; }
+// 댕댕야시장 간식 버프 (stat 결과에 곱함)
+const SNACKS = {
+  churros:{ name:'츄러스', img:'nm_churros', desc:'이동속도 +35%', apply:S=>{ S.spd*=1.35; } },
+  fries:{ name:'감자튀김', img:'nm_fries', desc:'피해 +40%', apply:S=>{ S.dmg*=1.4; } },
+  chicken:{ name:'치킨', img:'nm_chicken', desc:'체력 30% 회복 + 재생', apply:S=>{ S.regen+=3; } },
+  pizza:{ name:'피자', img:'nm_pizza', desc:'공격 범위 +35%', apply:S=>{ S.area*=1.35; } },
+  hotdog:{ name:'핫도그', img:'nm_hotdog', desc:'쿨타임 -30%', apply:S=>{ S.cd*=0.7; } },
+};
+const _stat=stat; stat=function(){ const S=_stat(); const b=G&&G.p.buff; if(b&&b.t>0) SNACKS[b.key].apply(S); return S; };
 
 // ====================== 스폰 ======================
 function spawnEnemy(type, x, y){
@@ -525,6 +533,13 @@ function update(dt){
     if(d<e.size/2+18 && p.inv<=0){ p.hp-=e.dmg; p.inv=0.6; G.shake=Math.max(G.shake,5); SFX.ouch(); G.texts.push({x:p.x,y:p.y-40,v:'-'+e.dmg,t:0.7,bad:true}); if(p.hp<=0){ if(G.revives>0){ G.revives--; p.hp=p.maxHp*0.5; p.inv=3; G.shake=16; toast('🏠 주인의 품! 부활'); G.fx.push({x:p.x,y:p.y,t:0.8,type:'ring',r:420,color:'rgba(255,201,77,'}); for(const o of G.enemies){ const d=dist(o,p); if(d<420){ hurt(o,80,(o.x-p.x)/(d||1),(o.y-p.y)/(d||1),26); } } } else { p.hp=0; endGame(); return; } } }
     if(d>Math.max(W,H)*1.2 && !e.boss){ const a=rand(0,6.28), r=Math.max(W,H)*0.65; e.x=p.x+Math.cos(a)*r; e.y=p.y+Math.sin(a)*r; }
   }
+  // 댕댕야시장 (2분마다 20초 개장, 간식 1개 선택 → 20초 버프)
+  if(p.buff&&p.buff.t>0) p.buff.t-=dt;
+  if(!G.market && G.t>=G.nextMarket){ G.nextMarket+=120; const a=rand(0,6.28), d=260; const mx=p.x+Math.cos(a)*d, my=p.y+Math.sin(a)*d; const keys=Object.keys(SNACKS);
+    G.market={ x:mx, y:my, t:22, snacks:keys.map((k,i)=>({key:k, x:mx+(i-2)*52, y:my+70})) }; toast('🏮 댕댕야시장 개장! 간식 하나 골라 드세요'); SFX.levelup(); }
+  if(G.market){ const m=G.market; m.t-=dt; for(let i=m.snacks.length-1;i>=0;i--){ const s=m.snacks[i]; if(dist(s,p)<30){ p.buff={key:s.key,t:20}; G.snacksEaten++; const sn=SNACKS[s.key]; if(s.key==='chicken') p.hp=Math.min(p.maxHp,p.hp+p.maxHp*0.3);
+      toast('😋 '+sn.name+' 냠냠! '+sn.desc+' (20초)'); SFX.buy(); G.fx.push({x:p.x,y:p.y,t:0.6,type:'ring',r:120,color:'rgba(255,120,200,'}); m.t=Math.min(m.t,0.6); m.snacks=[]; break; } }
+    if(m.t<=0) G.market=null; }
   // 댕비앙 (주기 스폰 + 획득) / 배변봉투 지뢰
   if(p.hydrate>0) p.hydrate-=dt;
   if(G.t>=G.nextWater){ G.nextWater=G.t+40; const a=rand(0,6.28); G.items.push({x:p.x+Math.cos(a)*rand(180,320),y:p.y+Math.sin(a)*rand(180,320),t:25}); }
@@ -580,6 +595,19 @@ function render(){
   for(let x=Math.floor((p.x-W/2)/320)*320; x<p.x+W/2+320; x+=320) for(let y=Math.floor((p.y-H/2)/320)*320; y<p.y+H/2+320; y+=320){ drawSprite('🐾',26,x+((x*7+y*13)%97),y+((x*3+y*11)%83),false,0.10); }
   for(const g of G.gems) drawSprite(g.big?'🍗':'🍖', g.big?26:16, g.x,g.y);
   for(const m of G.mines){ ctx.strokeStyle='rgba(61,139,255,'+(0.25+Math.sin(G.t*6)*0.15)+')'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(m.x,m.y,22,0,6.283); ctx.stroke(); drawPet('item_poopbag',26,m.x,m.y,false,1,0.3); }
+  if(G.market){ const m=G.market; const k=Math.min(1,m.t/0.6); // 밤 분위기
+    ctx.fillStyle='rgba(20,26,58,'+(0.42*k)+')'; ctx.fillRect(p.x-W/2-100,p.y-H/2-100,W+200,H+200);
+    const glow=ctx.createRadialGradient(m.x,m.y+30,20,m.x,m.y+30,260); glow.addColorStop(0,'rgba(255,200,120,'+(0.35*k)+')'); glow.addColorStop(1,'rgba(255,200,120,0)'); ctx.fillStyle=glow; ctx.fillRect(m.x-260,m.y-230,520,520);
+    // 포장마차: 천막 + 카운터 + 초롱
+    ctx.save(); ctx.globalAlpha=k; ctx.fillStyle='#293B8A'; ctx.fillRect(m.x-120,m.y-20,240,70); ctx.strokeStyle='#1D1D1B'; ctx.lineWidth=3; ctx.strokeRect(m.x-120,m.y-20,240,70);
+    for(let i=0;i<8;i++){ ctx.fillStyle=i%2?'#F06A9A':'#4EC9FF'; ctx.beginPath(); ctx.moveTo(m.x-130+i*32.5,m.y-60); ctx.lineTo(m.x-130+(i+1)*32.5,m.y-60); ctx.lineTo(m.x-130+(i+0.5)*32.5,m.y-38); ctx.closePath(); ctx.fill(); }
+    ctx.fillStyle='#1D1D1B'; ctx.fillRect(m.x-130,m.y-66,260,8); for(const dx of [-100,100]){ ctx.fillRect(m.x+dx-3,m.y-66,6,116); }
+    for(let i=0;i<5;i++){ const lx=m.x-96+i*48, ly=m.y-84+Math.sin(G.t*3+i)*3; ctx.fillStyle='#FFC94D'; ctx.beginPath(); ctx.arc(lx,ly,9,0,6.283); ctx.fill(); ctx.strokeStyle='#1D1D1B'; ctx.lineWidth=2; ctx.stroke(); }
+    drawPet('nm_logo',60,m.x,m.y-118,false,1); drawPet('nm_pouch',64,m.x+96,m.y+8,false,1,0.08);
+    ctx.fillStyle='#fff'; ctx.font='bold 13px GmarketSans,sans-serif'; ctx.textAlign='center'; ctx.fillText(m.snacks.length?'간식 하나 골라 드세요 · '+Math.ceil(m.t)+'초':'오늘 장사 끝!', m.x, m.y+18);
+    for(const s of m.snacks){ const bob=Math.sin(G.t*4+s.x)*4; ctx.fillStyle='rgba(255,255,255,0.75)'; ctx.beginPath(); ctx.arc(s.x,s.y+4,24,0,6.283); ctx.fill(); drawPet(SNACKS[s.key].img,44,s.x,s.y-bob,false,1); }
+    ctx.restore(); }
+  if(p.buff&&p.buff.t>0){ ctx.fillStyle='#F06A9A'; ctx.font='bold 12px GmarketSans,sans-serif'; ctx.textAlign='center'; ctx.fillText(SNACKS[p.buff.key].name+' 파워 '+Math.ceil(p.buff.t)+'s', p.x, p.y-62); }
   for(const it of G.items){ const bob=Math.sin(G.t*5+it.x)*4; ctx.fillStyle='rgba(120,190,255,'+(it.t<5?(Math.floor(G.t*8)%2?0.1:0.3):0.25)+')'; ctx.beginPath(); ctx.arc(it.x,it.y+2,22,0,6.283); ctx.fill(); drawPet('item_dangvian',46,it.x,it.y-bob,false,it.t<5&&Math.floor(G.t*8)%2?0.4:1,Math.sin(G.t*3)*0.1); }
   if(G.weapons.duck){ const r=(70+G.weapons.duck*14)*stat().area; ctx.fillStyle='rgba(255,201,77,0.22)'; ctx.beginPath(); ctx.arc(p.x,p.y,r,0,6.283); ctx.fill(); drawSprite('🦆',22,p.x+Math.cos(G.t*3)*r*0.8,p.y+Math.sin(G.t*3)*r*0.8); }
   for(const f of G.fx){ const k=f.t;
@@ -629,7 +657,7 @@ function endGame(){ running=false; $('hud').style.display='none'; const p=G.p; b
   $('resultTitle').textContent = G.win? '🏆 '+G.M.name+' 생존 성공!':G.pet.evoNames[p.evo]+'가 지쳐 쓰러졌습니다';
   $('resultSub').textContent = G.win? 'HAVE A NICE PETODAY! 펫투데이 세계를 지켜냈습니다.':(G.mode==='endless'?'무한 모드 기록: '+fmt(G.t):'다시 도전해서 더 오래 버텨보세요');
   $('resultStats').innerHTML = `<div>모드</div><b>${G.M.emoji} ${G.M.name}</b><div>생존 시간</div><b>${fmt(G.t)}</b><div>처치</div><b>${G.kills}</b><div>점수</div><b>${G.score.toLocaleString()}</b><div>도달 레벨</div><b>Lv ${p.lv}</b><div>최종 형태</div><b>${G.pet.evoNames[p.evo]}</b><div>최고 기록</div><b>${fmt(nb.time)} / ${nb.score.toLocaleString()}</b>`;
-  $('resultEarn').innerHTML = `획득 &nbsp;🥣 사료 +${kib.toLocaleString()} &nbsp;·&nbsp; 🧃 ${G.pet.name} 츄르 +${chu}` + (G.waters?` &nbsp;·&nbsp; 💧 댕비앙 ${G.waters}병`:'');
+  $('resultEarn').innerHTML = `획득 &nbsp;🥣 사료 +${kib.toLocaleString()} &nbsp;·&nbsp; 🧃 ${G.pet.name} 츄르 +${chu}` + (G.waters?` &nbsp;·&nbsp; 💧 댕비앙 ${G.waters}병`:'') + (G.snacksEaten?` &nbsp;·&nbsp; 🏮 야시장 간식 ${G.snacksEaten}개`:'');
   $('resultPromoText').innerHTML = G.win? `${G.pet.name}도 목이 마를 땐 댕비앙 <small>pH9 프리미엄 알칼리수 ↗</small>` : `지친 ${G.pet.name}에게 댕비앙 한 모금 <small>펫투데이 스마트스토어 ↗</small>`;
   LAST_RUN={ pet:G.pet.id, mode:G.mode, time:G.t, score:G.score, lv:p.lv, kills:G.kills, submitted:false };
   const ranked = G.M.ranked && G.t>=30; $('rankBox').style.display = ranked?'':'none';
@@ -718,7 +746,7 @@ $('burstBtn').addEventListener('touchstart',e=>{ e.stopPropagation(); if(running
 $('burstBtn').addEventListener('click',()=>{ if(running&&!paused) useBurst(); });
 
 // ====================== 부팅 ======================
-(async()=>{ const jobs=[]; for(const p of PETS) for(const [st,file] of Object.entries(p.img)) jobs.push(loadImg(p.id+'_'+st, SP+file+'.png')); for(const k of ['item_dangvian','item_poopbag']) jobs.push(loadImg(k, SP+k+'.png')); await Promise.all(jobs); $('loading').style.display='none'; renderTitle(); $('title').classList.add('show'); refClaim(); if(REF.from && !REF.sent) toast('👫 '+REF.from+'님의 초대로 오셨네요! 무한 모드 3분 + 닉네임 등록이면 친구에게 보상이 가요');
+(async()=>{ const jobs=[]; for(const p of PETS) for(const [st,file] of Object.entries(p.img)) jobs.push(loadImg(p.id+'_'+st, SP+file+'.png')); for(const k of ['item_dangvian','item_poopbag','nm_logo','nm_pouch','nm_churros','nm_fries','nm_chicken','nm_pizza','nm_hotdog']) jobs.push(loadImg(k, SP+k+'.png')); await Promise.all(jobs); $('loading').style.display='none'; renderTitle(); $('title').classList.add('show'); refClaim(); if(REF.from && !REF.sent) toast('👫 '+REF.from+'님의 초대로 오셨네요! 무한 모드 3분 + 닉네임 등록이면 친구에게 보상이 가요');
   if('serviceWorker' in navigator && location.protocol==='https:'){ try{ navigator.serviceWorker.register('sw.js').catch(()=>{}); }catch(e){} } })();
 </script>
 </body>
