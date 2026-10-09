@@ -660,13 +660,15 @@ function render(){
     if(e.boss){ ctx.fillStyle=BRAND.black; ctx.font='bold 14px GmarketSans,sans-serif'; ctx.textAlign='center'; ctx.fillText(e.name,e.x,e.y-e.size*0.85); } }
   for(const b of G.bullets){ ctx.save(); ctx.translate(b.x,b.y); ctx.rotate(b.rot||0); drawSprite(b.emoji,b.size,0,0); ctx.restore(); }
   // 플레이어
-  const h = 76 + p.evo*14; const bob = p.moving? Math.abs(Math.sin(G.t*14))*5:0; const rot = p.moving? Math.sin(G.t*14)*0.05:0;
+  const h = 76 + p.evo*14; const bob = p.moving? Math.abs(Math.sin(G.t*12))*4:0; const rot = 0;
   ctx.fillStyle='rgba(29,29,27,0.15)'; ctx.beginPath(); ctx.ellipse(p.x,p.y+h*0.48,h*0.32,h*0.09,0,0,6.283); ctx.fill();
   if(p.evo>=1){ ctx.strokeStyle=p.evo===2?'rgba(255,201,77,.7)':'rgba(97,202,132,.6)'; ctx.lineWidth=3; ctx.beginPath(); ctx.arc(p.x,p.y+h*0.46,h*0.36+Math.sin(G.t*4)*3,0,6.283); ctx.stroke(); }
   if(p.burstKind==='churu'&&p.burstActive>0){ ctx.strokeStyle='rgba(97,202,132,.8)'; ctx.lineWidth=4; ctx.beginPath(); ctx.arc(p.x,p.y,260*stat().area,0,6.283); ctx.stroke(); }
   const state = (p.burstActive>0 && p.burstKind!=='churu') ? 'burst':'walk';
   const palpha = p.inv>0? (Math.floor(G.t*20)%2?0.4:1):1;
-  if(p.moving && state==='walk') drawPetWalk(G.pet.id+'_walk', h, p.x, p.y-bob, p.face<0, palpha, rot, G.t*14, 0.22);
+  if(p.moving && state==='walk'){ // 통통 걷기: 발을 축으로 흔들림 + 착지 눌림 (그림을 자르지 않음)
+    const ph=G.t*12, rock=Math.sin(ph)*0.07, land=Math.max(0,-Math.sin(ph*2)), sy=1-land*0.06, sx=1+land*0.05;
+    ctx.save(); ctx.translate(p.x, p.y+h*0.46-bob); ctx.rotate(rock); ctx.scale(sx,sy); drawPet(G.pet.id+'_walk', h, 0, -h*0.46, p.face<0, palpha, 0); ctx.restore(); }
   else drawPet(G.pet.id+'_'+state, h, p.x, p.y-bob, p.face<0, palpha, rot);
   if(p.evo===2){ drawSprite('👑',22,p.x,p.y-h/2-6-bob); } else if(p.evo===1){ drawSprite('✨',18,p.x+h*0.35,p.y-h/2-bob); }
   ctx.font='bold 14px Montserrat,sans-serif'; ctx.textAlign='center';
