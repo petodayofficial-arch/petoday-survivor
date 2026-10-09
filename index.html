@@ -256,6 +256,17 @@ function drawSprite(emoji, size, x, y, flip, alpha){ const sp = sprite(emoji,siz
 // 캐릭터 이미지 로딩
 const IMG = {};
 function loadImg(key, src){ return new Promise(res=>{ const im=new Image(); im.onload=()=>{IMG[key]=im;res();}; im.onerror=()=>{console.warn('img fail',src);res();}; im.src=src; }); }
+// 걷기 모션: 그림 아래쪽(다리)을 좌/우로 나눠 종이인형처럼 번갈아 흔듦
+function drawPetWalk(key, h, x, y, flip, alpha, rot, phase, amt){
+  const im=IMG[key]; if(!im){ drawPet(key,h,x,y,flip,alpha,rot); return; }
+  const w=im.width/im.height*h, cut=0.62, legH=h*(1-cut), legY=-h/2+h*cut; const sw=Math.sin(phase)*amt;
+  ctx.save(); ctx.translate(x,y); if(rot) ctx.rotate(rot); if(flip) ctx.scale(-1,1); if(alpha!=null) ctx.globalAlpha=alpha;
+  // 다리: 왼쪽 절반과 오른쪽 절반을 반대 방향으로 기울임 (상단 고정)
+  for(const side of [0,1]){ const sx=side*im.width/2, dw=w/2, dx=-w/2+side*dw; const k=side?-sw:sw;
+    ctx.save(); ctx.translate(dx,legY); ctx.transform(1,0,k,1,0,0); ctx.drawImage(im, sx, im.height*cut, im.width/2, im.height*(1-cut), 0, 0, dw, legH); ctx.restore(); }
+  // 몸통(상단): 살짝 반대 방향으로 기울여 리듬감
+  ctx.save(); ctx.translate(0,legY); ctx.rotate(-sw*0.25); ctx.drawImage(im, 0, 0, im.width, im.height*cut, -w/2, -h*cut, w, h*cut+1); ctx.restore();
+  ctx.restore(); }
 function drawPet(key, h, x, y, flip, alpha, rot){ const im=IMG[key]; if(!im){ drawSprite('🐾',h*0.6,x,y,flip,alpha); return; } const w=im.width/im.height*h; ctx.save(); ctx.translate(x,y); if(rot) ctx.rotate(rot); if(flip) ctx.scale(-1,1); if(alpha!=null) ctx.globalAlpha=alpha; ctx.drawImage(im,-w/2,-h/2,w,h); ctx.restore(); }
 
 // ====================== 사운드 (Web Audio 합성, 파일 없음) ======================
@@ -627,7 +638,9 @@ function render(){
   if(p.evo>=1){ ctx.strokeStyle=p.evo===2?'rgba(255,201,77,.7)':'rgba(97,202,132,.6)'; ctx.lineWidth=3; ctx.beginPath(); ctx.arc(p.x,p.y+h*0.46,h*0.36+Math.sin(G.t*4)*3,0,6.283); ctx.stroke(); }
   if(p.burstKind==='churu'&&p.burstActive>0){ ctx.strokeStyle='rgba(97,202,132,.8)'; ctx.lineWidth=4; ctx.beginPath(); ctx.arc(p.x,p.y,260*stat().area,0,6.283); ctx.stroke(); }
   const state = (p.burstActive>0 && p.burstKind!=='churu') ? 'burst':'walk';
-  drawPet(G.pet.id+'_'+state, h, p.x, p.y-bob, p.face<0, p.inv>0? (Math.floor(G.t*20)%2?0.4:1):1, rot);
+  const palpha = p.inv>0? (Math.floor(G.t*20)%2?0.4:1):1;
+  if(p.moving && state==='walk') drawPetWalk(G.pet.id+'_walk', h, p.x, p.y-bob, p.face<0, palpha, rot, G.t*14, 0.22);
+  else drawPet(G.pet.id+'_'+state, h, p.x, p.y-bob, p.face<0, palpha, rot);
   if(p.evo===2){ drawSprite('👑',22,p.x,p.y-h/2-6-bob); } else if(p.evo===1){ drawSprite('✨',18,p.x+h*0.35,p.y-h/2-bob); }
   ctx.font='bold 14px Montserrat,sans-serif'; ctx.textAlign='center';
   for(const t of G.texts){ ctx.globalAlpha=Math.min(1,t.t*2); ctx.fillStyle=t.bad?BRAND.coral:(t.crit?BRAND.yellow:BRAND.blue); ctx.strokeStyle='rgba(255,255,255,.9)'; ctx.lineWidth=3; ctx.font=(t.crit?'800 18px':'800 14px')+' Montserrat,sans-serif'; ctx.strokeText(t.v,t.x,t.y); ctx.fillText(t.v,t.x,t.y); } ctx.globalAlpha=1;
