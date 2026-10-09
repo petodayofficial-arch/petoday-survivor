@@ -182,6 +182,7 @@
       <div id="tab_shop" style="display:none">
         <div class="sub">모든 캐릭터에 적용되는 영구 강화. 사료는 판이 끝날 때 점수·생존 시간으로 받습니다.</div>
         <div class="shop" id="shopList"></div>
+        <div class="help" style="margin-top:14px">밸런스 개편으로 10/9 이후 첫 접속 시 사료·강화가 한 번 초기화됩니다 (기록·닉네임 유지)<br><a href="#" onclick="resetSave();return false;" style="color:#999">내 데이터 전체 초기화</a></div>
       </div>
       <div id="tab_train" style="display:none">
         <div class="sub">캐릭터별 훈련. 츄르는 그 캐릭터로 플레이한 시간과 보스 처치로 받습니다.</div>
@@ -398,12 +399,16 @@ const BOSS_ORDER=['boss1','boss4','boss2','boss5','boss3'];
 let G = null, keys = {}, paused = false, running = false, lastT = 0;
 
 // ====================== 세이브 / 영구 강화 (2단계) ======================
-const SAVE_KEY='petoday_surv_save';
+const SAVE_KEY='petoday_surv_save'; const SAVE_VERSION=2;
 function defaultSave(){ return { kibble:0, churu:{}, perks:{}, training:{}, best:{}, runs:0, totalTime:0 }; }
 function loadSave(){ let s; try{ s=JSON.parse(localStorage.getItem(SAVE_KEY)||'null'); }catch(e){} if(!s){ s=defaultSave();
     // 1단계 기록 이관
     try{ const old=JSON.parse(localStorage.getItem('petoday_surv_best')||'{}'); if(Object.keys(old).length){ s.best.classic=old; } }catch(e){} }
-  for(const [k,v] of Object.entries(defaultSave())) if(s[k]==null) s[k]=v; return s; }
+  for(const [k,v] of Object.entries(defaultSave())) if(s[k]==null) s[k]=v;
+  // 경제 개편(SAVE_VERSION 2): 사료·츄르·강화·훈련 초기화, 기록·닉네임은 유지
+  if((s.v||1)<SAVE_VERSION){ s.kibble=0; s.churu={}; s.perks={}; s.training={}; s.v=SAVE_VERSION; s.resetNotice=true; try{ localStorage.setItem(SAVE_KEY, JSON.stringify(s)); }catch(e){} }
+  return s; }
+function resetSave(){ if(!window._resetArmed){ window._resetArmed=true; toast('⚠️ 한 번 더 누르면 사료·강화·기록이 모두 지워집니다'); setTimeout(()=>window._resetArmed=false,4000); return; } window._resetArmed=false; SAVE=defaultSave(); SAVE.v=SAVE_VERSION; saveNow(); try{ localStorage.removeItem('petoday_surv_refclaimed'); }catch(e){} renderTitle(); toast('🧹 초기화 완료'); }
 let SAVE = loadSave();
 function saveNow(){ localStorage.setItem(SAVE_KEY, JSON.stringify(SAVE)); }
 function bestOf(mode){ return SAVE.best[mode]||{}; }
@@ -780,7 +785,7 @@ $('burstBtn').addEventListener('touchstart',e=>{ e.stopPropagation(); if(running
 $('burstBtn').addEventListener('click',()=>{ if(running&&!paused) useBurst(); });
 
 // ====================== 부팅 ======================
-(async()=>{ const jobs=[]; for(const p of PETS) for(const [st,file] of Object.entries(p.img)) jobs.push(loadImg(p.id+'_'+st, SP+file+'.png')); for(const k of ['item_dangvian','item_poopbag','nm_logo','nm_neon','nm_pouch','nm_churros','nm_fries','nm_chicken','nm_pizza','nm_hotdog']) jobs.push(loadImg(k, SP+k+'.png')); await Promise.all(jobs); $('loading').style.display='none'; renderTitle(); $('title').classList.add('show'); refClaim(); if(REF.from && !REF.sent) toast('👫 '+REF.from+'님의 초대로 오셨네요! 무한 모드 3분 + 닉네임 등록이면 친구에게 보상이 가요');
+(async()=>{ const jobs=[]; for(const p of PETS) for(const [st,file] of Object.entries(p.img)) jobs.push(loadImg(p.id+'_'+st, SP+file+'.png')); for(const k of ['item_dangvian','item_poopbag','nm_logo','nm_neon','nm_pouch','nm_churros','nm_fries','nm_chicken','nm_pizza','nm_hotdog']) jobs.push(loadImg(k, SP+k+'.png')); await Promise.all(jobs); $('loading').style.display='none'; renderTitle(); $('title').classList.add('show'); refClaim(); if(SAVE.resetNotice){ delete SAVE.resetNotice; saveNow(); setTimeout(()=>toast('🧹 밸런스 개편: 사료·강화가 초기화됐어요 (기록은 그대로)'),600); } if(REF.from && !REF.sent) toast('👫 '+REF.from+'님의 초대로 오셨네요! 무한 모드 3분 + 닉네임 등록이면 친구에게 보상이 가요');
   if('serviceWorker' in navigator && location.protocol==='https:'){ try{ navigator.serviceWorker.register('sw.js').catch(()=>{}); }catch(e){} } })();
 </script>
 </body>
