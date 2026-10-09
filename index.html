@@ -271,25 +271,23 @@ function drawSprite(emoji, size, x, y, flip, alpha){ const sp = sprite(emoji,siz
 const IMG = {};
 function loadImg(key, src){ return new Promise(res=>{ const im=new Image(); im.onload=()=>{IMG[key]=im;res();}; im.onerror=()=>{console.warn('img fail',src);res();}; im.src=src; }); }
 // 걷기 리그: 다리 픽셀을 자동 분리해 관절에서 흔들고, 몸통을 위에 덮어 이음새를 숨김
-const MANUAL_RIGS={"pari_walk": {"legs": [{"name": "front-near", "poly": [[70, 184], [100, 212], [108, 226], [112, 262], [60, 270], [44, 240], [48, 205]], "pivot": [82, 196], "phase": 0, "topN": 3}, {"name": "front-far", "poly": [[100, 224], [140, 220], [152, 224], [150, 300], [145, 320], [100, 320], [98, 262]], "pivot": [125, 222], "phase": 1}, {"name": "back-far", "poly": [[214, 214], [246, 214], [246, 318], [214, 318]], "pivot": [230, 214], "phase": 0}, {"name": "back-near", "poly": [[247, 220], [298, 215], [296, 300], [290, 322], [248, 322], [246, 300]], "pivot": [272, 218], "phase": 1}]}, "kong_walk": {"legs": [{"name": "front-near", "poly": [[42, 208], [78, 236], [72, 268], [78, 302], [30, 306], [22, 280], [30, 240]], "pivot": [60, 218], "phase": 0}, {"name": "front-far", "poly": [[95, 240], [132, 238], [134, 300], [132, 305], [95, 305], [93, 268]], "pivot": [113, 240], "phase": 1}, {"name": "back-far", "poly": [[136, 205], [166, 210], [166, 300], [136, 300], [134, 260]], "pivot": [150, 206], "phase": 0}, {"name": "back-near", "poly": [[176, 210], [226, 205], [232, 250], [230, 278], [196, 278], [182, 250]], "pivot": [200, 212], "phase": 1}]}, "siri_walk": {"legs": [{"name": "front-near", "poly": [[262, 232], [310, 222], [330, 300], [282, 306], [256, 280]], "pivot": [285, 228], "phase": 0}, {"name": "front-far", "poly": [[196, 256], [244, 250], [246, 300], [196, 300], [194, 275]], "pivot": [220, 253], "phase": 1}, {"name": "back-far", "poly": [[118, 228], [154, 224], [152, 305], [118, 305], [116, 260]], "pivot": [135, 226], "phase": 0}, {"name": "back-near", "poly": [[12, 222], [62, 228], [60, 300], [10, 300], [8, 260]], "pivot": [36, 225], "phase": 1}]}};
+const MANUAL_RIGS={"pari_walk": {"legs": [{"name": "front-near", "poly": [[48, 212], [102, 212], [110, 230], [112, 262], [60, 270], [44, 240]], "pivot": [76, 212], "phase": 0}, {"name": "front-far", "poly": [[100, 224], [150, 224], [150, 300], [145, 320], [100, 320], [98, 262]], "pivot": [125, 224], "phase": 1}, {"name": "back-far", "poly": [[214, 214], [246, 214], [246, 318], [214, 318]], "pivot": [230, 214], "phase": 0}, {"name": "back-near", "poly": [[248, 232], [297, 228], [296, 300], [290, 322], [248, 322], [246, 300]], "pivot": [272, 230], "phase": 1}]}, "kong_walk": {"legs": [{"name": "front-near", "poly": [[30, 232], [78, 236], [72, 268], [78, 302], [30, 306], [22, 280]], "pivot": [54, 234], "phase": 0}, {"name": "front-far", "poly": [[95, 246], [132, 244], [134, 300], [132, 305], [95, 305], [93, 268]], "pivot": [113, 245], "phase": 1}, {"name": "back-far", "poly": [[136, 236], [166, 236], [166, 300], [136, 300], [134, 260]], "pivot": [151, 236], "phase": 0}, {"name": "back-near", "poly": [[178, 222], [228, 216], [232, 250], [230, 278], [196, 278], [182, 250]], "pivot": [203, 220], "phase": 1}]}, "siri_walk": {"legs": [{"name": "front-near", "poly": [[262, 232], [310, 222], [330, 300], [282, 306], [256, 280]], "pivot": [285, 228], "phase": 0}, {"name": "front-far", "poly": [[196, 256], [244, 250], [246, 300], [196, 300], [194, 275]], "pivot": [220, 253], "phase": 1}, {"name": "back-far", "poly": [[118, 248], [154, 246], [152, 305], [118, 305], [116, 270]], "pivot": [136, 247], "phase": 0}, {"name": "back-near", "poly": [[14, 240], [62, 236], [60, 300], [10, 300], [8, 262]], "pivot": [38, 238], "phase": 1}]}};
 const RIGS={};
 function buildManualRig(key, im){ const M=MANUAL_RIGS[key]; const w=im.width, h=im.height, sc=h/320; const OL='#1D1D1B';
   const body=document.createElement('canvas'); body.width=w; body.height=h; const bx=body.getContext('2d'); bx.drawImage(im,0,0);
+  const under=document.createElement('canvas'); under.width=w; under.height=h; const ux=under.getContext('2d'); ux.strokeStyle=OL; ux.lineWidth=3*sc; ux.lineCap='round'; ux.lineJoin='round';
   const legs=[];
   for(const L of M.legs){ const poly=L.poly.map(([x,y])=>[x*sc,y*sc]);
-    // 몸통에서 다리 영역 제거
     bx.save(); bx.beginPath(); poly.forEach((p,i)=> i?bx.lineTo(p[0],p[1]):bx.moveTo(p[0],p[1])); bx.closePath(); bx.clip(); bx.clearRect(0,0,w,h); bx.restore();
-    // 다리 캔버스: 다리 영역 + 위로 12px 겹침(몸통 아래 숨김)
-    const topN=L.topN||2; const ext=poly.map((p,i)=> i<topN? [p[0],p[1]-12*sc] : p);
+    const topN=L.topN||2; const ext=poly.map((p,i)=> i<topN? [p[0],p[1]-14*sc] : p);
     const lc=document.createElement('canvas'); lc.width=w; lc.height=h; const lx=lc.getContext('2d');
     lx.save(); lx.beginPath(); ext.forEach((p,i)=> i?lx.lineTo(p[0],p[1]):lx.moveTo(p[0],p[1])); lx.closePath(); lx.clip(); lx.drawImage(im,0,0); lx.restore();
     legs.push({c:lc, px:L.pivot[0]*sc, py:L.pivot[1]*sc, phase:L.phase*Math.PI, name:L.name});
-  }
-  // 배 밑선 닫기: 각 다리 영역의 윗변을 윤곽선으로
-  bx.strokeStyle=OL; bx.lineWidth=3.2*sc; bx.lineCap='round'; bx.lineJoin='round';
-  for(const L of M.legs){ const topN=L.topN||2; const pts=L.poly.slice(0,topN).map(([x,y])=>[x*sc,y*sc]); bx.beginPath(); pts.forEach((p,i)=> i?bx.lineTo(p[0],p[1]):bx.moveTo(p[0],p[1])); bx.stroke(); }
-  return RIGS[key]={body, legs, w, h, manual:true}; }
-function buildWalkRig(key){ const im=IMG[key]; if(!im) return null; if(RIGS[key]) return RIGS[key]; if(false && MANUAL_RIGS[key]) return buildManualRig(key, im);
+    const pts=poly.slice(0,topN); ux.beginPath(); pts.forEach((p,i)=> i?ux.lineTo(p[0],p[1]):ux.moveTo(p[0],p[1])); ux.stroke(); }
+  // 닫힘선은 원본 실루엣 안쪽에만 남김 (몸 바깥으로 삐져나오는 자국 제거)
+  ux.globalCompositeOperation='destination-in'; ux.drawImage(im,0,0); ux.globalCompositeOperation='source-over';
+  return RIGS[key]={body, under, legs, w, h, manual:true}; }
+function buildWalkRig(key){ const im=IMG[key]; if(!im) return null; if(RIGS[key]) return RIGS[key]; if(MANUAL_RIGS[key]) return buildManualRig(key, im);
   const w=im.width, h=im.height, c=document.createElement('canvas'); c.width=w; c.height=h; const x=c.getContext('2d'); x.drawImage(im,0,0); const d=x.getImageData(0,0,w,h).data;
   const cutY=Math.round(h*0.70); // 이 아래를 다리 후보로
   const mask=new Uint8Array(w*h); for(let i=0;i<w*h;i++) mask[i]=d[i*4+3]>40?1:0;
@@ -320,8 +318,8 @@ function buildWalkSheet(key){ if(SHEETS[key]) return SHEETS[key]; const rig=buil
   const sheet=document.createElement('canvas'); sheet.width=FW*WALK_FRAMES; sheet.height=H2; const g=sheet.getContext('2d');
   for(let f=0;f<WALK_FRAMES;f++){ const ph=f/WALK_FRAMES*Math.PI*2; const ox=f*FW+padX, oy=padY;
     const bodyBob=-Math.abs(Math.sin(ph))*5, pitch=Math.sin(ph*2)*0.025; // 두 걸음에 한 번 통통, 살짝 끄덕임
-    g.save(); g.translate(ox+rig.w*sc/2, oy+FH*0.9+bodyBob); g.rotate(pitch); g.translate(-rig.w*sc/2, -FH*0.9); g.scale(sc,sc);
-    const rotate = (PETS.find(q=>key.startsWith(q.id+'_'))||{}).legMode!=='shear'; const amp = 0.36; const liftPx = 5;
+    g.save(); g.translate(ox+rig.w*sc/2, oy+FH*0.9+bodyBob); g.rotate(pitch); g.translate(-rig.w*sc/2, -FH*0.9); g.scale(sc,sc); if(rig.under) g.drawImage(rig.under,0,0);
+    const rotate = (PETS.find(q=>key.startsWith(q.id+'_'))||{}).legMode!=='shear'; const amp = rig.manual? 0.26 : 0.36; const liftPx = rig.manual? 3 : 5;
     for(const L of rig.legs){ const sw=Math.sin(ph+L.phase); const k=sw*0.30, lift=Math.max(0,Math.cos(ph+L.phase))*liftPx;
       g.save(); g.translate(L.px, L.py-lift/sc); if(rotate) g.rotate(sw*amp); else g.transform(1,0,k,1,0,0); g.drawImage(L.c,-L.px,-L.py); g.restore(); }
     g.drawImage(rig.body,0,0); g.restore(); }
@@ -403,7 +401,7 @@ function enemyArt(type, size){
 function drawEnemy(type, size, x, y, flip, alpha, e){ const sp=enemyArt(type,size); ctx.save(); ctx.translate(x,y); if(flip) ctx.scale(-1,1); if(e&&!e.boss){ const w=Math.sin((G?G.t:0)*10+x*0.01)*0.08; ctx.rotate(w); } if(alpha!=null) ctx.globalAlpha=alpha; ctx.drawImage(sp.c,-sp.s/2,-sp.s/2,sp.s,sp.s); ctx.restore(); }
 
 // ====================== 데이터 정의 ======================
-const SP = 'assets/sprites/'; const SPRITE_VER='8';
+const SP = 'assets/sprites/'; const SPRITE_VER='9';
 const PETS = [
   { id:'pari', name:'파리', breed:'SPITZ', walkFacesLeft:true, hp:115, speed:3.6, weapon:'soccer', burst:'spotlight',
     img:{ walk:'pari_walk', hello:'pari_hello', love:'pari_love', down:'pari_down', burst:'pari_jump', sit:'pari_sit' },
