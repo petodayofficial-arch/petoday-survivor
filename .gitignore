@@ -8,3 +8,4 @@ Thumbs.db
 .DS_Store
 README_internal.md
 배포.ps1
+배포.bat
