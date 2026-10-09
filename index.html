@@ -705,7 +705,7 @@ function setTab(t){ document.querySelectorAll('.tab').forEach(e=>e.classList.tog
 // ====================== 랭킹 (Supabase REST) / 공유 ======================
 const lbOn = ()=>!!(LB_CONFIG.url&&LB_CONFIG.key);
 function clientId(){ let id=null; try{ id=localStorage.getItem('petoday_surv_cid'); if(!id){ id=(crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2)+Date.now()); localStorage.setItem('petoday_surv_cid',id); } }catch(e){ id='anon'; } return id; }
-async function lbFetch(path, opt){ const r=await fetch(LB_CONFIG.url.replace(/\/$/,'')+'/rest/v1/'+path, Object.assign({headers:{apikey:LB_CONFIG.key, Authorization:'Bearer '+LB_CONFIG.key, 'Content-Type':'application/json', Prefer:'return=minimal'}}, opt||{})); if(!r.ok) throw new Error('lb '+r.status+' '+(await r.text()).slice(0,120)); return r.status===204?null:r.json(); }
+async function lbFetch(path, opt){ const r=await fetch(LB_CONFIG.url.replace(/\/$/,'')+'/rest/v1/'+path, Object.assign({headers:{apikey:LB_CONFIG.key, Authorization:'Bearer '+LB_CONFIG.key, 'Content-Type':'application/json', Prefer:'return=minimal'}}, opt||{})); if(!r.ok) throw new Error('lb '+r.status+' '+(await r.text()).slice(0,120)); const txt=await r.text(); return txt? JSON.parse(txt) : null; }
 let LB_CACHE={t:0,rows:[]};
 async function lbTop(n){ if(Date.now()-LB_CACHE.t<15000) return LB_CACHE.rows; const rows=await lbFetch(`leaderboard?select=nickname,pet,time,score,created_at&order=time.desc,score.desc&limit=${n||100}`); LB_CACHE={t:Date.now(),rows}; return rows; }
 async function lbSubmit(e){ await lbFetch('scores',{method:'POST',body:JSON.stringify(e)}); LB_CACHE.t=0; }
