@@ -484,6 +484,8 @@ const EVENT = { until:new Date('2026-10-20T23:59:59+09:00'), prize:'댕비앙 1�
 const LB_CONFIG = { url:'https://hzokbpuplydnqazbrplo.supabase.co', key:'sb_publishable_tuKmHL-PeUIED4mvixxm2A_Adi58eUf' };
 const SITE_URL = 'https://petodayofficial-arch.github.io/petoday-survivor/';
 let curMode='classic', curPet=0, trainPet='pari';
+// 테스트 모드: ?test=1 로 열면 전 캐릭터 해금(기기에 저장), ?test=0 으로 해제
+const DEV_UNLOCK=(()=>{ try{ const q=new URLSearchParams(location.search).get('test'); if(q==='1') localStorage.setItem('petoday_surv_unlockall','1'); if(q==='0') localStorage.removeItem('petoday_surv_unlockall'); return localStorage.getItem('petoday_surv_unlockall')==='1'; }catch(e){ return false; } })();
 
 // 사료 상점 (전 캐릭터 공통)
 const PERKS = {
@@ -769,7 +771,7 @@ function updateHud(){ const p=G.p; $('hp').firstElementChild.style.width=(p.hp/p
   $('lv').textContent='Lv '+p.lv; $('timer').textContent=fmt(G.t); $('kills').textContent='🦴 '+G.kills; const ready=p.burst>=p.burstMax&&p.burstCd<=0; $('burstHint').textContent = ready? '✨ C : 필살기 준비!':(p.burstCd>0&&p.burst>=p.burstMax? 'C : 재사용 '+Math.ceil(p.burstCd)+'s':'C : 필살기 '+Math.floor(p.burst)+'%'); $('burstHint').style.background=ready?BRAND.green:'#fff'; $('burstHint').style.color=ready?'#fff':BRAND.blue; }
 let toastTimer; function toast(msg){ const t=$('toast'); t.textContent=msg; t.style.opacity=1; clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.style.opacity=0,1800); }
 function loop(now){ if(!running) return; const dt=Math.min(0.05,(now-lastT)/1000); lastT=now; if(!paused){ update(dt); if(running) render(); } requestAnimationFrame(loop); }
-function startGame(i){ const pet=PETS[i]; curPet=i; if(pet.unlock && !pet.unlock.check()){ toast('🔒 '+pet.unlock.desc); return; }
+function startGame(i){ const pet=PETS[i]; curPet=i; if(pet.unlock && !DEV_UNLOCK && !pet.unlock.check()){ toast('🔒 '+pet.unlock.desc); return; }
   const M=MODES[curMode]; if(M.unlock && !M.unlock.check()){ toast('🔒 '+M.unlock.desc); return; }
   newGame(pet, curMode); running=true; paused=false; $('title').classList.remove('show'); $('result').classList.remove('show'); $('hud').style.display='flex'; lastT=performance.now(); requestAnimationFrame(loop); audioInit(); bgmStart(); $('muteBtn').textContent=AUDIO.muted?'🔇':'🔊'; toast(M.emoji+' '+M.name+' · '+pet.name+' 출동!'); }
 function retry(){ startGame(curPet); }
@@ -854,7 +856,7 @@ function renderTitle(){ const best=bestOf(curMode);
   $('wKibble').textContent=SAVE.kibble.toLocaleString(); $('wChuru').textContent=Object.values(SAVE.churu).reduce((a,b)=>a+b,0);
   $('eventBanner').innerHTML=eventHtml(false);
   $('modeList').innerHTML = Object.entries(MODES).map(([k,M])=>{ const locked=M.unlock&&!M.unlock.check(); return `<div class="mode ${k===curMode?'on':''} ${locked?'locked':''}" onclick="setMode('${k}')"><b>${M.emoji} ${M.name}${M.ranked&&EVENT.active?' <span style="background:#61CA84;color:#1D1D1B;border-radius:999px;padding:1px 8px;font-size:10px">EVENT</span>':''}</b><small>${locked?'🔒 '+M.unlock.desc:M.desc}</small></div>`; }).join('');
-  $('petCards').innerHTML = PETS.map((p,i)=>{ const b=best[p.id]; const locked=p.unlock&&!p.unlock.check(); const tr=SAVE.training[p.id]; const tl=tr?Object.values(tr).reduce((a,b)=>a+b,0):0; return `<div class="card ${locked?'locked':''}" onclick="startGame(${i})"><img src="${SP}${p.img.hello}.png" alt="${p.name}"><div class="breed">${p.breed}</div><div class="name">${p.name}</div><div class="desc">${p.desc}<br><span style="color:var(--blue)">${p.burstDesc}</span></div><div class="meta"><div class="tag">${p.tag}</div>${tl?`<div class="tag g">훈련 ${tl}</div>`:''}${b?`<div class="desc">${MODES[curMode].name} 최고 ${fmt(b.time)}${b.win?' 🏆':''}</div>`:''}</div>${locked?`<div class="lock">🔒<br>${p.unlock.desc}</div>`:''}</div>`; }).join('');
+  $('petCards').innerHTML = PETS.map((p,i)=>{ const b=best[p.id]; const locked=p.unlock&&!DEV_UNLOCK&&!p.unlock.check(); const tr=SAVE.training[p.id]; const tl=tr?Object.values(tr).reduce((a,b)=>a+b,0):0; return `<div class="card ${locked?'locked':''}" onclick="startGame(${i})"><img src="${SP}${p.img.hello}.png" alt="${p.name}"><div class="breed">${p.breed}</div><div class="name">${p.name}</div><div class="desc">${p.desc}<br><span style="color:var(--blue)">${p.burstDesc}</span></div><div class="meta"><div class="tag">${p.tag}</div>${tl?`<div class="tag g">훈련 ${tl}</div>`:''}${b?`<div class="desc">${MODES[curMode].name} 최고 ${fmt(b.time)}${b.win?' 🏆':''}</div>`:''}</div>${locked?`<div class="lock">🔒<br>${p.unlock.desc}</div>`:''}</div>`; }).join('');
   $('shopList').innerHTML = Object.entries(PERKS).map(([k,P])=>{ const lv=PK(k), maxed=lv>=P.max, c=P.cost(lv); return `<div class="item"><div class="ic">${P.emoji}</div><div><div class="nm">${P.name} <span style="color:var(--blue)">Lv${lv}</span></div><div class="ds">${P.desc}</div>${pips(lv,P.max)}</div><button onclick="buyPerk('${k}')" ${maxed||SAVE.kibble<c?'disabled':''}>${maxed?'MAX':'🥣 '+c}</button></div>`; }).join('');
   $('trainPets').innerHTML = PETS.map(p=>`<div class="tp ${p.id===trainPet?'on':''}" onclick="setTrainPet('${p.id}')">${p.name} 🧃${SAVE.churu[p.id]||0}</div>`).join('');
   const have=SAVE.churu[trainPet]||0;
