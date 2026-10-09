@@ -280,7 +280,7 @@ function buildWalkRig(key){ const im=IMG[key]; if(!im) return null; if(RIGS[key]
   const body=document.createElement('canvas'); body.width=w; body.height=h; const bx=body.getContext('2d'); bx.drawImage(im,0,0); const bd=bx.getImageData(0,0,w,h);
   const legCanvases=[];
   legs.forEach((L,idx)=>{ const lc=document.createElement('canvas'); lc.width=w; lc.height=h; const lx=lc.getContext('2d'); const ld=lx.createImageData(w,h);
-    for(let yy=cutY; yy<h; yy++) for(let xx=L.minx; xx<=L.maxx; xx++){ const i=yy*w+xx; if(lab[i]!==L.id) continue; const o=i*4; ld.data[o]=d[o]; ld.data[o+1]=d[o+1]; ld.data[o+2]=d[o+2]; ld.data[o+3]=d[o+3]; if(yy>cutY+8) bd.data[o+3]=0; }
+    for(let yy=cutY; yy<h; yy++) for(let xx=L.minx; xx<=L.maxx; xx++){ const i=yy*w+xx; if(lab[i]!==L.id) continue; const o=i*4; ld.data[o]=d[o]; ld.data[o+1]=d[o+1]; ld.data[o+2]=d[o+2]; ld.data[o+3]=d[o+3]; }
     lx.putImageData(ld,0,0); const gait = legs.length===4 ? [0,Math.PI,Math.PI,0] : (legs.length===3 ? [0,Math.PI,0] : [0,Math.PI]); legCanvases.push({c:lc, px:(L.minx+L.maxx)/2, py:cutY+4, phase: gait[idx]||0}); });
   bx.putImageData(bd,0,0);
   return RIGS[key]={body, legs:legCanvases, w, h}; }
@@ -294,7 +294,7 @@ function buildWalkSheet(key){ if(SHEETS[key]) return SHEETS[key]; const rig=buil
     g.save(); g.translate(ox+rig.w*sc/2, oy+FH*0.9+bodyBob); g.rotate(pitch); g.translate(-rig.w*sc/2, -FH*0.9); g.scale(sc,sc);
     const rotate = (PETS.find(q=>key.startsWith(q.id+'_'))||{}).legMode!=='shear';
     for(const L of rig.legs){ const sw=Math.sin(ph+L.phase); const k=sw*0.30, lift=Math.max(0,Math.cos(ph+L.phase))*4;
-      g.save(); g.translate(L.px, L.py-lift/sc); if(rotate) g.rotate(sw*0.36); else g.transform(1,0,k,1,0,0); g.drawImage(L.c,-L.px,-L.py); g.restore(); }
+      g.save(); g.translate(L.px, L.py-lift/sc); if(rotate) g.rotate(sw*0.30); else g.transform(1,0,k,1,0,0); g.drawImage(L.c,-L.px,-L.py); g.restore(); }
     g.drawImage(rig.body,0,0); g.restore(); }
   return SHEETS[key]={sheet, FW, H2, scale:sc, padX, padY, rigH:rig.h, rigW:rig.w}; }
 function drawPetWalk(key, h, x, y, flip, alpha, rot, phase, amt){
@@ -384,7 +384,7 @@ const PETS = [
     img:{ walk:'kong_walk', hello:'kong_hello', love:'kong_love', down:'kong_down', burst:'kong_play', sit:'kong_sit' },
     evoNames:['콩이','운동장의 콩이','전설의 콩이'],
     desc:'멋진 외모, 순한 마음. 농구공 덩크 충격파로 주변을 밀어내는 탱커. 심심한 걸 제일 싫어해요.', burstDesc:'「운동장 질주」 5초간 무적 돌진, 부딪히는 적 모두 피해', tag:'탱커' },
-  { id:'siri', name:'시리', breed:'POODLE', walkFacesLeft:true, hp:125, speed:3.3, weapon:'potato', burst:'cheer',
+  { id:'siri', name:'시리', breed:'POODLE', walkFacesLeft:false, hp:125, speed:3.3, weapon:'potato', burst:'cheer',
     img:{ walk:'siri_walk', hello:'siri_hello', love:'siri_love', down:'siri_down', burst:'siri_play', sit:'siri_sit' },
     evoNames:['시리','배려왕 시리','전설의 시리'],
     desc:'섬세하고 배려심 깊은 푸들. 고구마를 던지는 원거리형. 혼자 있는 건 싫어요.', burstDesc:'「친구 응원」 체력 50% 회복 + 6초간 피해 2배', tag:'원거리',
