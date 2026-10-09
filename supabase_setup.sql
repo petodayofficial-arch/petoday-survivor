@@ -49,3 +49,23 @@ create trigger scores_rate_limit_trg before insert on public.scores for each row
 -- select nickname, contact, pet, time, score, created_at from public.scores
 --   where id in (select distinct on (lower(nickname)) id from public.scores order by lower(nickname), time desc, score desc)
 --   and created_at <= '2026-10-20 23:59:59+09' order by time desc, score desc limit 5;
+
+-- 5) 친구 초대 (추천인): 초대받은 기기 1대당 1건, 3분 이상 플레이 + 닉네임 등록 시 기록
+create table if not exists public.referrals (
+  id             uuid primary key default gen_random_uuid(),
+  created_at     timestamptz not null default now(),
+  referrer       text not null check (char_length(referrer) between 2 and 10),
+  invitee_client text not null unique,
+  invitee_nick   text check (invitee_nick is null or char_length(invitee_nick) <= 10),
+  play_time      integer not null check (play_time >= 180)
+);
+create index if not exists referrals_referrer_idx on public.referrals (lower(referrer));
+create or replace view public.referral_counts with (security_invoker = false) as
+  select lower(referrer) as referrer_key, min(referrer) as referrer, count(*)::int as invites
+  from public.referrals group by lower(referrer) order by invites desc;
+alter table public.referrals enable row level security;
+drop policy if exists "anon insert ref" on public.referrals;
+create policy "anon insert ref" on public.referrals for insert to anon with check (true);
+revoke all on public.referrals from anon;
+grant insert on public.referrals to anon;
+grant select on public.referral_counts to anon;
