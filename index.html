@@ -262,7 +262,7 @@ function loadImg(key, src){ return new Promise(res=>{ const im=new Image(); im.o
 const RIGS={};
 function buildWalkRig(key){ const im=IMG[key]; if(!im) return null; if(RIGS[key]) return RIGS[key];
   const w=im.width, h=im.height, c=document.createElement('canvas'); c.width=w; c.height=h; const x=c.getContext('2d'); x.drawImage(im,0,0); const d=x.getImageData(0,0,w,h).data;
-  const cutY=Math.round(h*0.66); // 이 아래를 다리 후보로
+  const cutY=Math.round(h*0.70); // 이 아래를 다리 후보로
   const mask=new Uint8Array(w*h); for(let i=0;i<w*h;i++) mask[i]=d[i*4+3]>40?1:0;
   // 다리 후보 영역에서 연결요소 찾기 (4방향 flood)
   const lab=new Int32Array(w*h); let n=0; const comps=[];
@@ -292,8 +292,9 @@ function buildWalkSheet(key){ if(SHEETS[key]) return SHEETS[key]; const rig=buil
   for(let f=0;f<WALK_FRAMES;f++){ const ph=f/WALK_FRAMES*Math.PI*2; const ox=f*FW+padX, oy=padY;
     const bodyBob=-Math.abs(Math.sin(ph))*5, pitch=Math.sin(ph*2)*0.025; // 두 걸음에 한 번 통통, 살짝 끄덕임
     g.save(); g.translate(ox+rig.w*sc/2, oy+FH*0.9+bodyBob); g.rotate(pitch); g.translate(-rig.w*sc/2, -FH*0.9); g.scale(sc,sc);
+    const rotate = (PETS.find(q=>key.startsWith(q.id+'_'))||{}).legMode!=='shear';
     for(const L of rig.legs){ const sw=Math.sin(ph+L.phase); const k=sw*0.30, lift=Math.max(0,Math.cos(ph+L.phase))*4;
-      g.save(); g.translate(L.px, L.py-lift/sc); g.transform(1,0,k,1,0,0); g.drawImage(L.c,-L.px,-L.py); g.restore(); }
+      g.save(); g.translate(L.px, L.py-lift/sc); if(rotate) g.rotate(sw*0.36); else g.transform(1,0,k,1,0,0); g.drawImage(L.c,-L.px,-L.py); g.restore(); }
     g.drawImage(rig.body,0,0); g.restore(); }
   return SHEETS[key]={sheet, FW, H2, scale:sc, padX, padY, rigH:rig.h, rigW:rig.w}; }
 function drawPetWalk(key, h, x, y, flip, alpha, rot, phase, amt){
@@ -379,7 +380,7 @@ const PETS = [
     img:{ walk:'pari_walk', hello:'pari_hello', love:'pari_love', down:'pari_down', burst:'pari_jump', sit:'pari_sit' },
     evoNames:['파리','인기스타 파리','전설의 파리'],
     desc:'관심은 전부 파리 것! 축구공을 튕겨 적을 맞히는 돌격형. 간식이 삶의 원동력.', burstDesc:'「관심 집중!」 간식 전부 끌어오기 + 전체 충격파', tag:'밸런스' },
-  { id:'kong', name:'콩이', breed:'DOBERMANN', walkFacesLeft:true, hp:175, speed:3.0, weapon:'dunk', burst:'dash',
+  { id:'kong', name:'콩이', breed:'DOBERMANN', walkFacesLeft:true, legMode:'rotate', hp:175, speed:3.0, weapon:'dunk', burst:'dash',
     img:{ walk:'kong_walk', hello:'kong_hello', love:'kong_love', down:'kong_down', burst:'kong_play', sit:'kong_sit' },
     evoNames:['콩이','운동장의 콩이','전설의 콩이'],
     desc:'멋진 외모, 순한 마음. 농구공 덩크 충격파로 주변을 밀어내는 탱커. 심심한 걸 제일 싫어해요.', burstDesc:'「운동장 질주」 5초간 무적 돌진, 부딪히는 적 모두 피해', tag:'탱커' },
