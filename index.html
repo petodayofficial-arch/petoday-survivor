@@ -173,7 +173,7 @@
         <div class="help" id="lbMine"></div>
         <div class="rankbox" id="inviteBox">
           <div class="rb-title">👫 친구 초대 보상</div>
-          <div class="help" style="margin-top:0">내 초대 링크로 들어온 친구가 <b>3분 이상 플레이하고 닉네임을 등록</b>하면, 나에게 <b>🥣 사료 300 + 🧃 츄르 3</b>이 들어옵니다. (친구 1명당 1회)</div>
+          <div class="help" style="margin-top:0">내 초대 링크로 들어온 친구가 <b>3분 이상 플레이하고 닉네임을 등록</b>하면, 나에게 <b>🥣 사료 600 + 🧃 츄르 5</b>이 들어옵니다. (친구 1명당 1회)</div>
           <div id="inviteMine" class="help"></div>
         </div>
         <div class="lb" id="inviteList" style="margin-top:10px"></div>
@@ -745,14 +745,14 @@ async function refReport(nick, playTime){ const from=REF.from; if(!from || REF.s
 let REF_CACHE={t:0,rows:[]};
 async function refCounts(){ if(Date.now()-REF_CACHE.t<15000) return REF_CACHE.rows; const rows=await lbFetch('referral_counts?select=referrer,invites&order=invites.desc&limit=10'); REF_CACHE={t:Date.now(),rows}; return rows; }
 async function refClaim(){ const me=REF.mine; if(!me||!lbOn()) return; try{ const rows=await lbFetch(`referral_counts?select=invites&referrer_key=eq.${encodeURIComponent(me.toLowerCase())}`); const n=rows[0]?rows[0].invites:0; const diff=n-REF.claimed;
-    if(diff>0){ SAVE.kibble+=300*diff; SAVE.churu[curPetId()]=(SAVE.churu[curPetId()]||0)+3*diff; saveNow(); REF.claimed=n; toast(`👫 친구 ${diff}명 초대 보상! 🥣 +${300*diff} 🧃 +${3*diff}`); SFX.buy(); renderTitle(); }
+    if(diff>0){ SAVE.kibble+=600*diff; SAVE.churu[curPetId()]=(SAVE.churu[curPetId()]||0)+5*diff; saveNow(); REF.claimed=n; toast(`👫 친구 ${diff}명 초대 보상! 🥣 +${600*diff} 🧃 +${5*diff}`); SFX.buy(); renderTitle(); }
     return n; }catch(e){ console.warn(e); } }
 function curPetId(){ return (PETS[curPet]||PETS[0]).id; }
 async function renderInvite(){ const me=REF.mine; const box=$('inviteMine'), list=$('inviteList');
   if(!me){ box.innerHTML='무한 모드에서 한 판 하고 <b>닉네임을 등록</b>하면 내 초대 링크가 생깁니다.'; list.innerHTML=''; return; }
-  box.innerHTML=`<div style="margin-top:6px">내 초대 링크 <span style="font-family:Montserrat;font-weight:800;color:var(--blue);word-break:break-all">${esc(SITE_URL+"?ref="+REF.mine)}</span></div><div style="margin-top:6px"><button class="btn" style="margin:0;padding:8px 14px;font-size:13px" onclick="copyInvite()">📋 링크 복사</button> <span id="inviteCount" style="margin-left:8px">초대 ${REF.claimed}명 · 받은 보상 🥣 ${300*REF.claimed}</span></div>`;
+  box.innerHTML=`<div style="margin-top:6px">내 초대 링크 <span style="font-family:Montserrat;font-weight:800;color:var(--blue);word-break:break-all">${esc(SITE_URL+"?ref="+REF.mine)}</span></div><div style="margin-top:6px"><button class="btn" style="margin:0;padding:8px 14px;font-size:13px" onclick="copyInvite()">📋 링크 복사</button> <span id="inviteCount" style="margin-left:8px">초대 ${REF.claimed}명 · 받은 보상 🥣 ${600*REF.claimed}</span></div>`;
   if(!lbOn()){ list.innerHTML=''; return; }
-  try{ const n=await refClaim(); if(n!=null) $('inviteCount').textContent=`초대 ${n}명 · 받은 보상 🥣 ${300*n}`; const rows=await refCounts(); list.innerHTML = rows.length? `<div class="help" style="margin:0 0 4px;text-align:left">초대 순위</div>`+rows.map((r,i)=>`<div class="lr ${r.referrer.toLowerCase()===me.toLowerCase()?'me':''}"><span class="rk">${i+1}</span><span class="nk">${esc(r.referrer)}</span><span class="pt"></span><span class="tm">${r.invites}명</span></div>`).join('') : ''; }catch(e){ console.warn(e); } }
+  try{ const n=await refClaim(); if(n!=null) $('inviteCount').textContent=`초대 ${n}명 · 받은 보상 🥣 ${600*n}`; const rows=await refCounts(); list.innerHTML = rows.length? `<div class="help" style="margin:0 0 4px;text-align:left">초대 순위</div>`+rows.map((r,i)=>`<div class="lr ${r.referrer.toLowerCase()===me.toLowerCase()?'me':''}"><span class="rk">${i+1}</span><span class="nk">${esc(r.referrer)}</span><span class="pt"></span><span class="tm">${r.invites}명</span></div>`).join('') : ''; }catch(e){ console.warn(e); } }
 async function copyInvite(){ try{ await navigator.clipboard.writeText('[뱀서류 게임] 같이 하자, 이 링크로 들어오면 됨. 5등 안에 들면 댕비앙 한 박스 '+REF.link); toast('📋 초대 링크 복사됨!'); }catch(e){ prompt('초대 링크를 복사하세요', REF.link); } }
 async function shareText(text){ const url=REF.link; if(navigator.share){ try{ await navigator.share({title:'펫투데이 펫 서바이버', text, url}); return; }catch(e){ if(e&&e.name==='AbortError') return; } }
   try{ await navigator.clipboard.writeText(text+' '+url); toast('📋 링크 복사됨! 카톡에 붙여넣기'); }catch(e){ prompt('아래 링크를 복사해 공유하세요', text+' '+url); } }
