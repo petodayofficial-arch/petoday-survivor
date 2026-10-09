@@ -183,6 +183,11 @@
       <div id="tab_shop" style="display:none">
         <div class="sub">모든 캐릭터에 적용되는 영구 강화. 사료는 판이 끝날 때 점수·생존 시간으로 받습니다.</div>
         <div class="shop" id="shopList"></div>
+        <div class="rankbox" id="inviteBoxShop" style="margin-top:14px">
+          <div class="rb-title">👫 친구 초대 보상</div>
+          <div class="help" style="margin-top:0">내 초대 링크로 들어온 친구가 <b>3분 이상 플레이하고 닉네임을 등록</b>하면, 나에게 <b>🥣 사료 1,000 + 🧃 츄르 5</b>이 들어옵니다. (친구 1명당 1회)</div>
+          <div id="inviteMineShop" class="help"></div>
+        </div>
         <div class="help" style="margin-top:14px"><a href="#" onclick="resetSave();return false;" style="color:#999">내 데이터 전체 초기화</a></div>
       </div>
       <div id="tab_train" style="display:none">
@@ -259,8 +264,25 @@ function drawSprite(emoji, size, x, y, flip, alpha){ const sp = sprite(emoji,siz
 const IMG = {};
 function loadImg(key, src){ return new Promise(res=>{ const im=new Image(); im.onload=()=>{IMG[key]=im;res();}; im.onerror=()=>{console.warn('img fail',src);res();}; im.src=src; }); }
 // 걷기 리그: 다리 픽셀을 자동 분리해 관절에서 흔들고, 몸통을 위에 덮어 이음새를 숨김
+const MANUAL_RIGS={"pari_walk": {"legs": [{"name": "front-near", "poly": [[70, 184], [100, 212], [108, 226], [112, 262], [60, 270], [44, 240], [48, 205]], "pivot": [82, 196], "phase": 0, "topN": 3}, {"name": "front-far", "poly": [[100, 224], [140, 220], [152, 224], [150, 300], [145, 320], [100, 320], [98, 262]], "pivot": [125, 222], "phase": 1}, {"name": "back-far", "poly": [[214, 214], [246, 214], [246, 318], [214, 318]], "pivot": [230, 214], "phase": 0}, {"name": "back-near", "poly": [[247, 220], [298, 215], [296, 300], [290, 322], [248, 322], [246, 300]], "pivot": [272, 218], "phase": 1}]}, "kong_walk": {"legs": [{"name": "front-near", "poly": [[42, 208], [78, 236], [72, 268], [78, 302], [30, 306], [22, 280], [30, 240]], "pivot": [60, 218], "phase": 0}, {"name": "front-far", "poly": [[95, 240], [132, 238], [134, 300], [132, 305], [95, 305], [93, 268]], "pivot": [113, 240], "phase": 1}, {"name": "back-far", "poly": [[136, 205], [166, 210], [166, 300], [136, 300], [134, 260]], "pivot": [150, 206], "phase": 0}, {"name": "back-near", "poly": [[176, 210], [226, 205], [232, 250], [230, 278], [196, 278], [182, 250]], "pivot": [200, 212], "phase": 1}]}, "siri_walk": {"legs": [{"name": "front-near", "poly": [[262, 232], [310, 222], [330, 300], [282, 306], [256, 280]], "pivot": [285, 228], "phase": 0}, {"name": "front-far", "poly": [[196, 256], [244, 250], [246, 300], [196, 300], [194, 275]], "pivot": [220, 253], "phase": 1}, {"name": "back-far", "poly": [[118, 228], [154, 224], [152, 305], [118, 305], [116, 260]], "pivot": [135, 226], "phase": 0}, {"name": "back-near", "poly": [[12, 222], [62, 228], [60, 300], [10, 300], [8, 260]], "pivot": [36, 225], "phase": 1}]}};
 const RIGS={};
-function buildWalkRig(key){ const im=IMG[key]; if(!im) return null; if(RIGS[key]) return RIGS[key];
+function buildManualRig(key, im){ const M=MANUAL_RIGS[key]; const w=im.width, h=im.height, sc=h/320; const OL='#1D1D1B';
+  const body=document.createElement('canvas'); body.width=w; body.height=h; const bx=body.getContext('2d'); bx.drawImage(im,0,0);
+  const legs=[];
+  for(const L of M.legs){ const poly=L.poly.map(([x,y])=>[x*sc,y*sc]);
+    // 몸통에서 다리 영역 제거
+    bx.save(); bx.beginPath(); poly.forEach((p,i)=> i?bx.lineTo(p[0],p[1]):bx.moveTo(p[0],p[1])); bx.closePath(); bx.clip(); bx.clearRect(0,0,w,h); bx.restore();
+    // 다리 캔버스: 다리 영역 + 위로 12px 겹침(몸통 아래 숨김)
+    const topN=L.topN||2; const ext=poly.map((p,i)=> i<topN? [p[0],p[1]-12*sc] : p);
+    const lc=document.createElement('canvas'); lc.width=w; lc.height=h; const lx=lc.getContext('2d');
+    lx.save(); lx.beginPath(); ext.forEach((p,i)=> i?lx.lineTo(p[0],p[1]):lx.moveTo(p[0],p[1])); lx.closePath(); lx.clip(); lx.drawImage(im,0,0); lx.restore();
+    legs.push({c:lc, px:L.pivot[0]*sc, py:L.pivot[1]*sc, phase:L.phase*Math.PI, name:L.name});
+  }
+  // 배 밑선 닫기: 각 다리 영역의 윗변을 윤곽선으로
+  bx.strokeStyle=OL; bx.lineWidth=3.2*sc; bx.lineCap='round'; bx.lineJoin='round';
+  for(const L of M.legs){ const topN=L.topN||2; const pts=L.poly.slice(0,topN).map(([x,y])=>[x*sc,y*sc]); bx.beginPath(); pts.forEach((p,i)=> i?bx.lineTo(p[0],p[1]):bx.moveTo(p[0],p[1])); bx.stroke(); }
+  return RIGS[key]={body, legs, w, h, manual:true}; }
+function buildWalkRig(key){ const im=IMG[key]; if(!im) return null; if(RIGS[key]) return RIGS[key]; if(false && MANUAL_RIGS[key]) return buildManualRig(key, im);
   const w=im.width, h=im.height, c=document.createElement('canvas'); c.width=w; c.height=h; const x=c.getContext('2d'); x.drawImage(im,0,0); const d=x.getImageData(0,0,w,h).data;
   const cutY=Math.round(h*0.70); // 이 아래를 다리 후보로
   const mask=new Uint8Array(w*h); for(let i=0;i<w*h;i++) mask[i]=d[i*4+3]>40?1:0;
@@ -280,21 +302,21 @@ function buildWalkRig(key){ const im=IMG[key]; if(!im) return null; if(RIGS[key]
   const body=document.createElement('canvas'); body.width=w; body.height=h; const bx=body.getContext('2d'); bx.drawImage(im,0,0); const bd=bx.getImageData(0,0,w,h);
   const legCanvases=[];
   legs.forEach((L,idx)=>{ const lc=document.createElement('canvas'); lc.width=w; lc.height=h; const lx=lc.getContext('2d'); const ld=lx.createImageData(w,h);
-    for(let yy=cutY; yy<h; yy++) for(let xx=L.minx; xx<=L.maxx; xx++){ const i=yy*w+xx; if(lab[i]!==L.id) continue; const o=i*4; ld.data[o]=d[o]; ld.data[o+1]=d[o+1]; ld.data[o+2]=d[o+2]; ld.data[o+3]=d[o+3]; }
-    lx.putImageData(ld,0,0); const gait = legs.length===4 ? [0,Math.PI,Math.PI,0] : (legs.length===3 ? [0,Math.PI,0] : [0,Math.PI]); legCanvases.push({c:lc, px:(L.minx+L.maxx)/2, py:cutY+4, phase: gait[idx]||0}); });
+    for(let yy=cutY; yy<h; yy++) for(let xx=L.minx; xx<=L.maxx; xx++){ const i=yy*w+xx; if(lab[i]!==L.id) continue; const o=i*4; ld.data[o]=d[o]; ld.data[o+1]=d[o+1]; ld.data[o+2]=d[o+2]; ld.data[o+3]=d[o+3]; if(yy>cutY+8) bd.data[o+3]=0; }
+    lx.putImageData(ld,0,0); legCanvases.push({c:lc, px:(L.minx+L.maxx)/2, py:cutY+4, phase: idx%2? Math.PI:0}); });
   bx.putImageData(bd,0,0);
   return RIGS[key]={body, legs:legCanvases, w, h}; }
 // 걷기 12프레임 시트: 리그로 12단계를 미리 그려두고 순서대로 재생 (발 들기 + 몸통 리듬 포함)
-const WALK_FRAMES=24, SHEETS={};
+const WALK_FRAMES=12, SHEETS={};
 function buildWalkSheet(key){ if(SHEETS[key]) return SHEETS[key]; const rig=buildWalkRig(key); if(!rig||!rig.legs.length) return null;
   const FH=240, sc=FH/rig.h, padX=Math.round(rig.w*sc*0.18), FW=Math.round(rig.w*sc)+padX*2, padY=14, H2=FH+padY*2;
   const sheet=document.createElement('canvas'); sheet.width=FW*WALK_FRAMES; sheet.height=H2; const g=sheet.getContext('2d');
   for(let f=0;f<WALK_FRAMES;f++){ const ph=f/WALK_FRAMES*Math.PI*2; const ox=f*FW+padX, oy=padY;
     const bodyBob=-Math.abs(Math.sin(ph))*5, pitch=Math.sin(ph*2)*0.025; // 두 걸음에 한 번 통통, 살짝 끄덕임
     g.save(); g.translate(ox+rig.w*sc/2, oy+FH*0.9+bodyBob); g.rotate(pitch); g.translate(-rig.w*sc/2, -FH*0.9); g.scale(sc,sc);
-    const rotate = (PETS.find(q=>key.startsWith(q.id+'_'))||{}).legMode!=='shear';
-    for(const L of rig.legs){ const sw=Math.sin(ph+L.phase); const k=sw*0.30, lift=Math.max(0,Math.cos(ph+L.phase))*4;
-      g.save(); g.translate(L.px, L.py-lift/sc); if(rotate) g.rotate(sw*0.30); else g.transform(1,0,k,1,0,0); g.drawImage(L.c,-L.px,-L.py); g.restore(); }
+    const rotate = (PETS.find(q=>key.startsWith(q.id+'_'))||{}).legMode!=='shear'; const amp = 0.36; const liftPx = 5;
+    for(const L of rig.legs){ const sw=Math.sin(ph+L.phase); const k=sw*0.30, lift=Math.max(0,Math.cos(ph+L.phase))*liftPx;
+      g.save(); g.translate(L.px, L.py-lift/sc); if(rotate) g.rotate(sw*amp); else g.transform(1,0,k,1,0,0); g.drawImage(L.c,-L.px,-L.py); g.restore(); }
     g.drawImage(rig.body,0,0); g.restore(); }
   return SHEETS[key]={sheet, FW, H2, scale:sc, padX, padY, rigH:rig.h, rigW:rig.w}; }
 function drawPetWalk(key, h, x, y, flip, alpha, rot, phase, amt){
@@ -374,7 +396,7 @@ function enemyArt(type, size){
 function drawEnemy(type, size, x, y, flip, alpha, e){ const sp=enemyArt(type,size); ctx.save(); ctx.translate(x,y); if(flip) ctx.scale(-1,1); if(e&&!e.boss){ const w=Math.sin((G?G.t:0)*10+x*0.01)*0.08; ctx.rotate(w); } if(alpha!=null) ctx.globalAlpha=alpha; ctx.drawImage(sp.c,-sp.s/2,-sp.s/2,sp.s,sp.s); ctx.restore(); }
 
 // ====================== 데이터 정의 ======================
-const SP = 'assets/sprites/';
+const SP = 'assets/sprites/'; const SPRITE_VER='7';
 const PETS = [
   { id:'pari', name:'파리', breed:'SPITZ', walkFacesLeft:true, hp:115, speed:3.6, weapon:'soccer', burst:'spotlight',
     img:{ walk:'pari_walk', hello:'pari_hello', love:'pari_love', down:'pari_down', burst:'pari_jump', sit:'pari_sit' },
@@ -499,10 +521,8 @@ function stat(){ const ps=G.passives; const tr=SAVE.training[G.pet.id]||{}; retu
 // 댕댕야시장 간식 버프 (stat 결과에 곱함)
 const SNACKS = {
   churros:{ name:'츄러스', img:'nm_churros', desc:'이동속도 +35%', apply:S=>{ S.spd*=1.35; } },
-  fries:{ name:'감자튀김', img:'nm_fries', desc:'피해 +40%', apply:S=>{ S.dmg*=1.4; } },
+  hotdog:{ name:'핫도그', img:'nm_hotdog', desc:'피해 +40%', apply:S=>{ S.dmg*=1.4; } },
   chicken:{ name:'치킨', img:'nm_chicken', desc:'체력 30% 회복 + 재생', apply:S=>{ S.regen+=3; } },
-  pizza:{ name:'피자', img:'nm_pizza', desc:'공격 범위 +35%', apply:S=>{ S.area*=1.35; } },
-  hotdog:{ name:'핫도그', img:'nm_hotdog', desc:'쿨타임 -30%', apply:S=>{ S.cd*=0.7; } },
 };
 const _stat=stat; stat=function(){ const S=_stat(); const b=G&&G.p.buff; if(b&&b.t>0) SNACKS[b.key].apply(S); return S; };
 
@@ -612,7 +632,7 @@ function update(dt){
   // 댕댕야시장 (2분마다 20초 개장, 간식 1개 선택 → 20초 버프)
   if(p.buff&&p.buff.t>0) p.buff.t-=dt;
   if(!G.market && G.t>=G.nextMarket){ G.nextMarket+=120; const a=rand(0,6.28), d=240; let mx=p.x+Math.cos(a)*d, my=p.y+Math.sin(a)*d; mx=Math.max(p.x-W/2+190, Math.min(p.x+W/2-190, mx)); my=Math.max(p.y-H/2+230, Math.min(p.y+H/2-120, my)); const keys=Object.keys(SNACKS);
-    G.market={ x:mx, y:my, t:22, snacks:keys.map((k,i)=>({key:k, x:mx+(i-2)*58, y:my-14})) }; toast('🏮 댕댕야시장 개장! 간식 하나 골라 드세요'); SFX.levelup(); }
+    G.market={ x:mx, y:my, t:22, snacks:keys.map((k,i)=>({key:k, x:mx+(i-1)*78, y:my-14})) }; toast('🏮 댕댕야시장 개장! 간식 하나 골라 드세요'); SFX.levelup(); }
   if(G.market){ const m=G.market; m.t-=dt; for(let i=m.snacks.length-1;i>=0;i--){ const s=m.snacks[i]; if(dist(s,p)<34){ p.buff={key:s.key,t:20}; G.snacksEaten++; const sn=SNACKS[s.key]; if(s.key==='chicken') p.hp=Math.min(p.maxHp,p.hp+p.maxHp*0.3);
       toast('😋 '+sn.name+' 냠냠! '+sn.desc+' (20초)'); SFX.buy(); G.fx.push({x:p.x,y:p.y,t:0.6,type:'ring',r:120,color:'rgba(255,120,200,'}); m.t=Math.min(m.t,0.6); m.snacks=[]; break; } }
     if(m.t<=0) G.market=null; }
@@ -772,7 +792,7 @@ function endGame(){ running=false; $('hud').style.display='none'; const p=G.p; b
 function togglePause(){ if(!running) return; if($('levelup').classList.contains('show')) return; paused=!paused; $('pause').classList.toggle('show',paused); if(paused){ const w=Object.entries(G.weapons).map(([k,l])=>`${WEAPONS[k].emoji} ${WEAPONS[k].name} Lv${l}`).join('<br>'); const ps=Object.entries(G.passives).map(([k,l])=>`${PASSIVES[k].emoji} ${PASSIVES[k].name} Lv${l}`).join('<br>')||'-'; $('pauseStats').innerHTML=`<div>무기</div><b style="font-size:13px">${w}</b><div>패시브</div><b style="font-size:13px">${ps}</b>`; } else lastT=performance.now(); }
 function backToTitle(){ running=false; paused=false; bgmStop(); ['pause','result','levelup'].forEach(i=>$(i).classList.remove('show')); $('hud').style.display='none'; ctx.clearRect(0,0,W,H); renderTitle(); $('title').classList.add('show'); }
 function pips(lv,max){ let s='<div class="pips">'; for(let i=0;i<max;i++) s+=`<i class="${i<lv?'on':''}"></i>`; return s+'</div>'; }
-function setTab(t){ document.querySelectorAll('.tab').forEach(e=>e.classList.toggle('on',e.dataset.tab===t)); for(const k of ['play','rank','shop','train']) $('tab_'+k).style.display=(k===t?'':'none'); if(t==='rank'){ renderRank(); renderInvite(); } }
+function setTab(t){ document.querySelectorAll('.tab').forEach(e=>e.classList.toggle('on',e.dataset.tab===t)); for(const k of ['play','rank','shop','train']) $('tab_'+k).style.display=(k===t?'':'none'); if(t==='rank'){ renderRank(); renderInvite(); } if(t==='shop') renderInvite(); }
 
 // ====================== 랭킹 (Supabase REST) / 공유 ======================
 const lbOn = ()=>!!(LB_CONFIG.url&&LB_CONFIG.key);
@@ -815,11 +835,11 @@ async function refClaim(){ const me=REF.mine; if(!me||!lbOn()) return; try{ cons
     if(diff>0){ SAVE.kibble+=1000*diff; SAVE.churu[curPetId()]=(SAVE.churu[curPetId()]||0)+5*diff; saveNow(); REF.claimed=n; toast(`👫 친구 ${diff}명 초대 보상! 🥣 +${1000*diff} 🧃 +${5*diff}`); SFX.buy(); renderTitle(); }
     return n; }catch(e){ console.warn(e); } }
 function curPetId(){ return (PETS[curPet]||PETS[0]).id; }
-async function renderInvite(){ const me=REF.mine; const box=$('inviteMine'), list=$('inviteList');
+async function renderInvite(){ const me=REF.mine; const list=$('inviteList'); const box={ set innerHTML(v){ $('inviteMine').innerHTML=v; const b2=$('inviteMineShop'); if(b2) b2.innerHTML=v; } };
   if(!me){ box.innerHTML='무한 모드에서 한 판 하고 <b>닉네임을 등록</b>하면 내 초대 링크가 생깁니다.'; list.innerHTML=''; return; }
   box.innerHTML=`<div style="margin-top:6px">내 초대 링크 <span style="font-family:Montserrat;font-weight:800;color:var(--blue);word-break:break-all">${esc(SITE_URL+"?ref="+REF.mine)}</span></div><div style="margin-top:6px"><button class="btn" style="margin:0;padding:8px 14px;font-size:13px" onclick="copyInvite()">📋 링크 복사</button> <span id="inviteCount" style="margin-left:8px">초대 ${REF.claimed}명 · 받은 보상 🥣 ${1000*REF.claimed}</span></div>`;
   if(!lbOn()){ list.innerHTML=''; return; }
-  try{ const n=await refClaim(); if(n!=null) $('inviteCount').textContent=`초대 ${n}명 · 받은 보상 🥣 ${1000*n}`; const rows=await refCounts(); list.innerHTML = rows.length? `<div class="help" style="margin:0 0 4px;text-align:left">초대 순위</div>`+rows.map((r,i)=>`<div class="lr ${r.referrer.toLowerCase()===me.toLowerCase()?'me':''}"><span class="rk">${i+1}</span><span class="nk">${esc(r.referrer)}</span><span class="pt"></span><span class="tm">${r.invites}명</span></div>`).join('') : ''; }catch(e){ console.warn(e); } }
+  try{ const n=await refClaim(); if(n!=null) document.querySelectorAll('#inviteCount').forEach(el=>el.textContent=`초대 ${n}명 · 받은 보상 🥣 ${1000*n}`); const rows=await refCounts(); list.innerHTML = rows.length? `<div class="help" style="margin:0 0 4px;text-align:left">초대 순위</div>`+rows.map((r,i)=>`<div class="lr ${r.referrer.toLowerCase()===me.toLowerCase()?'me':''}"><span class="rk">${i+1}</span><span class="nk">${esc(r.referrer)}</span><span class="pt"></span><span class="tm">${r.invites}명</span></div>`).join('') : ''; }catch(e){ console.warn(e); } }
 async function copyInvite(){ try{ await navigator.clipboard.writeText('[뱀서류 게임] 같이 하자, 이 링크로 들어오면 됨. 5등 안에 들면 댕비앙 한 박스 '+REF.link); toast('📋 초대 링크 복사됨!'); }catch(e){ prompt('초대 링크를 복사하세요', REF.link); } }
 async function shareText(text){ const url=REF.link; if(navigator.share){ try{ await navigator.share({title:'펫투데이 펫 서바이버', text, url}); return; }catch(e){ if(e&&e.name==='AbortError') return; } }
   try{ await navigator.clipboard.writeText(text+' '+url); toast('📋 링크 복사됨! 카톡에 붙여넣기'); }catch(e){ prompt('아래 링크를 복사해 공유하세요', text+' '+url); } }
@@ -852,7 +872,7 @@ $('burstBtn').addEventListener('touchstart',e=>{ e.stopPropagation(); if(running
 $('burstBtn').addEventListener('click',()=>{ if(running&&!paused) useBurst(); });
 
 // ====================== 부팅 ======================
-(async()=>{ const jobs=[]; for(const p of PETS) for(const [st,file] of Object.entries(p.img)) jobs.push(loadImg(p.id+'_'+st, SP+file+'.png')); for(const k of ['item_dangvian','item_poopbag','nm_logo','nm_neon','nm_pouch','nm_churros','nm_fries','nm_chicken','nm_pizza','nm_hotdog']) jobs.push(loadImg(k, SP+k+'.png')); await Promise.all(jobs); $('loading').style.display='none'; renderTitle(); $('title').classList.add('show'); refClaim(); if(SAVE.resetNotice){ delete SAVE.resetNotice; saveNow(); } if(REF.from && !REF.sent) toast('👫 '+REF.from+'님의 초대로 오셨네요! 무한 모드 3분 + 닉네임 등록이면 친구에게 보상이 가요');
+(async()=>{ const jobs=[]; for(const p of PETS) for(const [st,file] of Object.entries(p.img)) jobs.push(loadImg(p.id+'_'+st, SP+file+'.png?v='+SPRITE_VER)); for(const k of ['item_dangvian','item_poopbag','nm_logo','nm_neon','nm_pouch','nm_churros','nm_chicken','nm_hotdog']) jobs.push(loadImg(k, SP+k+'.png?v='+SPRITE_VER)); await Promise.all(jobs); $('loading').style.display='none'; renderTitle(); $('title').classList.add('show'); refClaim(); if(SAVE.resetNotice){ delete SAVE.resetNotice; saveNow(); } if(REF.from && !REF.sent) toast('👫 '+REF.from+'님의 초대로 오셨네요! 무한 모드 3분 + 닉네임 등록이면 친구에게 보상이 가요');
   if('serviceWorker' in navigator && location.protocol==='https:'){ try{ let reloaded=false; navigator.serviceWorker.addEventListener('controllerchange',()=>{ if(reloaded) return; reloaded=true; if(!running) location.reload(); }); navigator.serviceWorker.register('sw.js').then(r=>{ try{ r.update(); }catch(e){} }).catch(()=>{}); }catch(e){} } })();
 </script>
 </body>
