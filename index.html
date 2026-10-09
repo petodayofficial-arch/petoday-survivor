@@ -760,8 +760,8 @@ function render(){
   const palpha = p.inv>0? (Math.floor(G.t*20)%2?0.4:1):1;
   const flipWalk = G.pet.walkFacesLeft ? p.face>0 : p.face<0;
   if(p.moving && state==='walk' && G.pet.walkStyle==='hop'){ // 다리 고정: 몸 전체가 통통 튀며 살짝 끄덕임 (발 기준)
-    const ph=G.t*11; const hop=Math.abs(Math.sin(ph))*6, tilt=Math.sin(ph*2)*0.035, sq=1-Math.max(0,-Math.sin(ph*2))*0.04;
-    ctx.save(); ctx.translate(p.x, p.y+h*0.46-hop); ctx.rotate(tilt); ctx.scale(1/sq, sq); drawPet(G.pet.id+'_walk', h, 0, -h*0.46, flipWalk, palpha, 0); ctx.restore(); }
+    const hop=Math.abs(Math.sin(G.t*9))*3; // 변형 없이 위아래 3px만
+    drawPet(G.pet.id+'_walk', h, p.x, p.y-hop, flipWalk, palpha, 0); }
   else if(p.moving && state==='walk'){ const ph=G.t*11; drawPetWalk(G.pet.id+'_walk', h, p.x, p.y, flipWalk, palpha, 0, ph, 0.36); }
   else if(state==='walk') drawPet(G.pet.id+'_walk', h, p.x, p.y-bob, flipWalk, palpha, rot);
   else drawPet(G.pet.id+'_'+state, h, p.x, p.y-bob, p.face<0, palpha, rot);
