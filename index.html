@@ -257,17 +257,37 @@ function drawSprite(emoji, size, x, y, flip, alpha){ const sp = sprite(emoji,siz
 // 캐릭터 이미지 로딩
 const IMG = {};
 function loadImg(key, src){ return new Promise(res=>{ const im=new Image(); im.onload=()=>{IMG[key]=im;res();}; im.onerror=()=>{console.warn('img fail',src);res();}; im.src=src; }); }
-// 걷기 모션: 그림 아래쪽(다리)을 좌/우로 나눠 종이인형처럼 번갈아 흔듦
+// 걷기 리그: 다리 픽셀을 자동 분리해 관절에서 흔들고, 몸통을 위에 덮어 이음새를 숨김
+const RIGS={};
+function buildWalkRig(key){ const im=IMG[key]; if(!im) return null; if(RIGS[key]) return RIGS[key];
+  const w=im.width, h=im.height, c=document.createElement('canvas'); c.width=w; c.height=h; const x=c.getContext('2d'); x.drawImage(im,0,0); const d=x.getImageData(0,0,w,h).data;
+  const cutY=Math.round(h*0.70); // 이 아래를 다리 후보로
+  const mask=new Uint8Array(w*h); for(let i=0;i<w*h;i++) mask[i]=d[i*4+3]>40?1:0;
+  // 다리 후보 영역에서 연결요소 찾기 (4방향 flood)
+  const lab=new Int32Array(w*h); let n=0; const comps=[];
+  for(let yy=cutY; yy<h; yy++) for(let xx=0; xx<w; xx++){ const i=yy*w+xx; if(!mask[i]||lab[i]) continue; n++; const st=[i]; lab[i]=n; let minx=xx,maxx=xx,miny=yy,maxy=yy,cnt=0;
+    while(st.length){ const j=st.pop(); cnt++; const jx=j%w, jy=(j-jx)/w; if(jx<minx)minx=jx; if(jx>maxx)maxx=jx; if(jy<miny)miny=jy; if(jy>maxy)maxy=jy;
+      for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){ const nx=jx+dx, ny=jy+dy; if(nx<0||nx>=w||ny<cutY||ny>=h) continue; const k=ny*w+nx; if(mask[k]&&!lab[k]){ lab[k]=n; st.push(k); } } }
+    if(cnt>w*h*0.002 && (maxy-miny)>h*0.08) comps.push({id:n,minx,maxx,miny,maxy,cnt}); }
+  comps.sort((a,b)=>a.minx-b.minx);
+  // 다리가 한 덩어리로 붙어 있으면 가운데서 둘로 나눔
+  let legs=[];
+  if(comps.length===1){ const c0=comps[0], mid=Math.round((c0.minx+c0.maxx)/2); legs=[{id:c0.id,minx:c0.minx,maxx:mid,miny:c0.miny,maxy:c0.maxy},{id:c0.id,minx:mid+1,maxx:c0.maxx,miny:c0.miny,maxy:c0.maxy}]; }
+  else legs=comps.slice(0,4);
+  if(!legs.length){ return RIGS[key]={body:im, legs:[], w, h}; }
+  // 몸통 캔버스: 다리 픽셀(컷 아래) 제거, 단 컷 경계 8px는 몸통에 남겨 관절을 덮음
+  const body=document.createElement('canvas'); body.width=w; body.height=h; const bx=body.getContext('2d'); bx.drawImage(im,0,0); const bd=bx.getImageData(0,0,w,h);
+  const legCanvases=[];
+  legs.forEach((L,idx)=>{ const lc=document.createElement('canvas'); lc.width=w; lc.height=h; const lx=lc.getContext('2d'); const ld=lx.createImageData(w,h);
+    for(let yy=cutY; yy<h; yy++) for(let xx=L.minx; xx<=L.maxx; xx++){ const i=yy*w+xx; if(lab[i]!==L.id) continue; const o=i*4; ld.data[o]=d[o]; ld.data[o+1]=d[o+1]; ld.data[o+2]=d[o+2]; ld.data[o+3]=d[o+3]; if(yy>cutY+8) bd.data[o+3]=0; }
+    lx.putImageData(ld,0,0); legCanvases.push({c:lc, px:(L.minx+L.maxx)/2, py:cutY+4, phase: idx%2? Math.PI:0}); });
+  bx.putImageData(bd,0,0);
+  return RIGS[key]={body, legs:legCanvases, w, h}; }
 function drawPetWalk(key, h, x, y, flip, alpha, rot, phase, amt){
-  const im=IMG[key]; if(!im){ drawPet(key,h,x,y,flip,alpha,rot); return; }
-  const w=im.width/im.height*h, cut=0.62, legH=h*(1-cut), legY=-h/2+h*cut; const sw=Math.sin(phase)*amt;
-  ctx.save(); ctx.translate(x,y); if(rot) ctx.rotate(rot); if(flip) ctx.scale(-1,1); if(alpha!=null) ctx.globalAlpha=alpha;
-  // 다리: 왼쪽 절반과 오른쪽 절반을 반대 방향으로 기울임 (상단 고정)
-  for(const side of [0,1]){ const sx=side*im.width/2, dw=w/2, dx=-w/2+side*dw; const k=side?-sw:sw;
-    ctx.save(); ctx.translate(dx,legY); ctx.transform(1,0,k,1,0,0); ctx.drawImage(im, sx, im.height*cut, im.width/2, im.height*(1-cut), 0, 0, dw, legH); ctx.restore(); }
-  // 몸통(상단): 살짝 반대 방향으로 기울여 리듬감
-  ctx.save(); ctx.translate(0,legY); ctx.rotate(-sw*0.25); ctx.drawImage(im, 0, 0, im.width, im.height*cut, -w/2, -h*cut, w, h*cut+1); ctx.restore();
-  ctx.restore(); }
+  const rig=buildWalkRig(key); if(!rig||!rig.legs.length){ drawPet(key,h,x,y,flip,alpha,rot); return; }
+  const sc=h/rig.h, w=rig.w*sc; ctx.save(); ctx.translate(x,y); if(rot) ctx.rotate(rot); if(flip) ctx.scale(-1,1); if(alpha!=null) ctx.globalAlpha=alpha; ctx.translate(-w/2,-h/2); ctx.scale(sc,sc);
+  for(const L of rig.legs){ const a=Math.sin(phase+L.phase)*amt; ctx.save(); ctx.translate(L.px,L.py); ctx.rotate(a); ctx.drawImage(L.c,-L.px,-L.py); ctx.restore(); }
+  ctx.drawImage(rig.body,0,0); ctx.restore(); }
 function drawPet(key, h, x, y, flip, alpha, rot){ const im=IMG[key]; if(!im){ drawSprite('🐾',h*0.6,x,y,flip,alpha); return; } const w=im.width/im.height*h; ctx.save(); ctx.translate(x,y); if(rot) ctx.rotate(rot); if(flip) ctx.scale(-1,1); if(alpha!=null) ctx.globalAlpha=alpha; ctx.drawImage(im,-w/2,-h/2,w,h); ctx.restore(); }
 
 // ====================== 사운드 (Web Audio 합성, 파일 없음) ======================
@@ -342,15 +362,15 @@ function drawEnemy(type, size, x, y, flip, alpha, e){ const sp=enemyArt(type,siz
 // ====================== 데이터 정의 ======================
 const SP = 'assets/sprites/';
 const PETS = [
-  { id:'pari', name:'파리', breed:'SPITZ', hp:115, speed:3.6, weapon:'soccer', burst:'spotlight',
+  { id:'pari', name:'파리', breed:'SPITZ', walkFacesLeft:true, hp:115, speed:3.6, weapon:'soccer', burst:'spotlight',
     img:{ walk:'pari_walk', hello:'pari_hello', love:'pari_love', down:'pari_down', burst:'pari_jump', sit:'pari_sit' },
     evoNames:['파리','인기스타 파리','전설의 파리'],
     desc:'관심은 전부 파리 것! 축구공을 튕겨 적을 맞히는 돌격형. 간식이 삶의 원동력.', burstDesc:'「관심 집중!」 간식 전부 끌어오기 + 전체 충격파', tag:'밸런스' },
-  { id:'kong', name:'콩이', breed:'DOBERMANN', hp:175, speed:3.0, weapon:'dunk', burst:'dash',
+  { id:'kong', name:'콩이', breed:'DOBERMANN', walkFacesLeft:true, hp:175, speed:3.0, weapon:'dunk', burst:'dash',
     img:{ walk:'kong_walk', hello:'kong_hello', love:'kong_love', down:'kong_down', burst:'kong_play', sit:'kong_sit' },
     evoNames:['콩이','운동장의 콩이','전설의 콩이'],
     desc:'멋진 외모, 순한 마음. 농구공 덩크 충격파로 주변을 밀어내는 탱커. 심심한 걸 제일 싫어해요.', burstDesc:'「운동장 질주」 5초간 무적 돌진, 부딪히는 적 모두 피해', tag:'탱커' },
-  { id:'siri', name:'시리', breed:'POODLE', hp:125, speed:3.3, weapon:'potato', burst:'cheer',
+  { id:'siri', name:'시리', breed:'POODLE', walkFacesLeft:true, hp:125, speed:3.3, weapon:'potato', burst:'cheer',
     img:{ walk:'siri_walk', hello:'siri_hello', love:'siri_love', down:'siri_down', burst:'siri_play', sit:'siri_sit' },
     evoNames:['시리','배려왕 시리','전설의 시리'],
     desc:'섬세하고 배려심 깊은 푸들. 고구마를 던지는 원거리형. 혼자 있는 건 싫어요.', burstDesc:'「친구 응원」 체력 50% 회복 + 6초간 피해 2배', tag:'원거리',
@@ -506,9 +526,9 @@ function fireWeapons(dt){
         for(const e of G.enemies){ const d=dist(e,p); if(d<r+e.size/2){ const dx=(e.x-p.x)/(d||1), dy=(e.y-p.y)/(d||1); hurt(e,(14+lv*6)*dmg,dx,dy,8); } } break; }
       case 'soccer':{ G.cd[k]=1.6*S.cd; const n=1+Math.floor(lv/2); for(let i=0;i<n;i++){ const e=nearest(p.x,p.y,500); const a=e?Math.atan2(e.y-p.y,e.x-p.x)+rand(-0.3,0.3):rand(0,6.28);
         G.bullets.push({x:p.x,y:p.y,vx:Math.cos(a)*7.5,vy:Math.sin(a)*7.5,dmg:(11+lv*5)*dmg,t:3.2,emoji:'⚽',size:22*S.area,pierce:99,bounce:true,hitCd:{}}); } break; }
-      case 'potato':{ G.cd[k]=0.7*S.cd; const e=nearest(p.x,p.y,520); if(e){ const n=1+Math.floor(lv/2); const a0=Math.atan2(e.y-p.y,e.x-p.x); p.face=Math.cos(a0)<0?-1:1;
+      case 'potato':{ G.cd[k]=0.7*S.cd; const e=nearest(p.x,p.y,520); if(e){ const n=1+Math.floor(lv/2); const a0=Math.atan2(e.y-p.y,e.x-p.x); if(!p.moving) p.face=Math.cos(a0)<0?-1:1;
         for(let i=0;i<n;i++){ const a=a0+(i-(n-1)/2)*0.18; G.bullets.push({x:p.x,y:p.y,vx:Math.cos(a)*9,vy:Math.sin(a)*9,dmg:(10+lv*4)*dmg,t:1.3,emoji:'🍠',size:18,pierce:1,spin:1}); } } break; }
-      case 'churu':{ G.cd[k]=0.9*S.cd; const len=(270+lv*30); const e=nearest(p.x,p.y,len); if(e){ const a=Math.atan2(e.y-p.y,e.x-p.x); p.face=Math.cos(a)<0?-1:1; G.fx.push({x:p.x,y:p.y,t:0.2,type:'beam',a,len,color:'rgba(97,202,132,'}); beamHit(a,len,(16+lv*7)*dmg,14*S.area); } break; }
+      case 'churu':{ G.cd[k]=0.9*S.cd; const len=(270+lv*30); const e=nearest(p.x,p.y,len); if(e){ const a=Math.atan2(e.y-p.y,e.x-p.x); if(!p.moving) p.face=Math.cos(a)<0?-1:1; G.fx.push({x:p.x,y:p.y,t:0.2,type:'beam',a,len,color:'rgba(97,202,132,'}); beamHit(a,len,(16+lv*7)*dmg,14*S.area); } break; }
       case 'heart':{ G.cd[k]=1.4*S.cd; const len=(230+lv*30); const e=nearest(p.x,p.y,len); if(e){ const a=Math.atan2(e.y-p.y,e.x-p.x); G.fx.push({x:p.x,y:p.y,t:0.25,type:'beam',a,len,color:'rgba(240,106,160,'}); beamHit(a,len,(18+lv*8)*dmg,18*S.area); } break; }
       case 'bone':{ G.cd[k]=1.6*S.cd; const n=Math.ceil(lv/2); for(let i=0;i<n;i++){ const e=nearest(p.x+rand(-200,200),p.y+rand(-200,200),700); const a=e?Math.atan2(e.y-p.y,e.x-p.x):rand(0,6.28);
         G.bullets.push({x:p.x,y:p.y,vx:Math.cos(a)*8,vy:Math.sin(a)*8,dmg:(12+lv*5)*dmg,t:2.2,emoji:'🦴',size:22*S.area,pierce:99,boom:true,age:0,spin:1}); } break; }
@@ -660,15 +680,15 @@ function render(){
     if(e.boss){ ctx.fillStyle=BRAND.black; ctx.font='bold 14px GmarketSans,sans-serif'; ctx.textAlign='center'; ctx.fillText(e.name,e.x,e.y-e.size*0.85); } }
   for(const b of G.bullets){ ctx.save(); ctx.translate(b.x,b.y); ctx.rotate(b.rot||0); drawSprite(b.emoji,b.size,0,0); ctx.restore(); }
   // 플레이어
-  const h = 76 + p.evo*14; const bob = p.moving? Math.abs(Math.sin(G.t*12))*4:0; const rot = 0;
+  const h = 76 + p.evo*14; const bob = p.moving? Math.abs(Math.sin(G.t*11))*3:0; const rot = 0;
   ctx.fillStyle='rgba(29,29,27,0.15)'; ctx.beginPath(); ctx.ellipse(p.x,p.y+h*0.48,h*0.32,h*0.09,0,0,6.283); ctx.fill();
   if(p.evo>=1){ ctx.strokeStyle=p.evo===2?'rgba(255,201,77,.7)':'rgba(97,202,132,.6)'; ctx.lineWidth=3; ctx.beginPath(); ctx.arc(p.x,p.y+h*0.46,h*0.36+Math.sin(G.t*4)*3,0,6.283); ctx.stroke(); }
   if(p.burstKind==='churu'&&p.burstActive>0){ ctx.strokeStyle='rgba(97,202,132,.8)'; ctx.lineWidth=4; ctx.beginPath(); ctx.arc(p.x,p.y,260*stat().area,0,6.283); ctx.stroke(); }
   const state = (p.burstActive>0 && p.burstKind!=='churu') ? 'burst':'walk';
   const palpha = p.inv>0? (Math.floor(G.t*20)%2?0.4:1):1;
-  if(p.moving && state==='walk'){ // 통통 걷기: 발을 축으로 흔들림 + 착지 눌림 (그림을 자르지 않음)
-    const ph=G.t*12, rock=Math.sin(ph)*0.07, land=Math.max(0,-Math.sin(ph*2)), sy=1-land*0.06, sx=1+land*0.05;
-    ctx.save(); ctx.translate(p.x, p.y+h*0.46-bob); ctx.rotate(rock); ctx.scale(sx,sy); drawPet(G.pet.id+'_walk', h, 0, -h*0.46, p.face<0, palpha, 0); ctx.restore(); }
+  const flipWalk = G.pet.walkFacesLeft ? p.face>0 : p.face<0;
+  if(p.moving && state==='walk'){ const ph=G.t*11; drawPetWalk(G.pet.id+'_walk', h, p.x, p.y-bob, flipWalk, palpha, Math.sin(ph)*0.03, ph, 0.32); }
+  else if(state==='walk') drawPet(G.pet.id+'_walk', h, p.x, p.y-bob, flipWalk, palpha, rot);
   else drawPet(G.pet.id+'_'+state, h, p.x, p.y-bob, p.face<0, palpha, rot);
   if(p.evo===2){ drawSprite('👑',22,p.x,p.y-h/2-6-bob); } else if(p.evo===1){ drawSprite('✨',18,p.x+h*0.35,p.y-h/2-bob); }
   ctx.font='bold 14px Montserrat,sans-serif'; ctx.textAlign='center';
