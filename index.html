@@ -131,7 +131,8 @@
   .promo img{height:26px;}
   .promo:hover{background:#EEF1FA;}
   .promo small{font-weight:300;color:#777;}
-  .earn{background:#EEF1FA;border-radius:14px;padding:10px 14px;font-size:14px;font-weight:700;color:var(--blue);margin:6px auto 0;max-width:380px;}
+  .earn{background:#EEF1FA;border-radius:14px;padding:10px 12px;font-size:13px;font-weight:700;color:var(--blue);margin:6px auto 0;max-width:420px;display:flex;flex-wrap:wrap;gap:6px;justify-content:center;align-items:center;}
+  .earn .et{font-size:12px;color:#7a86b8;margin-right:2px;} .earn .chip{background:#fff;border-radius:999px;padding:5px 11px;white-space:nowrap;box-shadow:0 1px 3px rgba(41,59,138,.12);}
 </style>
 </head>
 <body>
@@ -261,7 +262,7 @@ function loadImg(key, src){ return new Promise(res=>{ const im=new Image(); im.o
 const RIGS={};
 function buildWalkRig(key){ const im=IMG[key]; if(!im) return null; if(RIGS[key]) return RIGS[key];
   const w=im.width, h=im.height, c=document.createElement('canvas'); c.width=w; c.height=h; const x=c.getContext('2d'); x.drawImage(im,0,0); const d=x.getImageData(0,0,w,h).data;
-  const cutY=Math.round(h*0.70); // 이 아래를 다리 후보로
+  const cutY=Math.round(h*0.66); // 이 아래를 다리 후보로
   const mask=new Uint8Array(w*h); for(let i=0;i<w*h;i++) mask[i]=d[i*4+3]>40?1:0;
   // 다리 후보 영역에서 연결요소 찾기 (4방향 flood)
   const lab=new Int32Array(w*h); let n=0; const comps=[];
@@ -280,18 +281,18 @@ function buildWalkRig(key){ const im=IMG[key]; if(!im) return null; if(RIGS[key]
   const legCanvases=[];
   legs.forEach((L,idx)=>{ const lc=document.createElement('canvas'); lc.width=w; lc.height=h; const lx=lc.getContext('2d'); const ld=lx.createImageData(w,h);
     for(let yy=cutY; yy<h; yy++) for(let xx=L.minx; xx<=L.maxx; xx++){ const i=yy*w+xx; if(lab[i]!==L.id) continue; const o=i*4; ld.data[o]=d[o]; ld.data[o+1]=d[o+1]; ld.data[o+2]=d[o+2]; ld.data[o+3]=d[o+3]; if(yy>cutY+8) bd.data[o+3]=0; }
-    lx.putImageData(ld,0,0); legCanvases.push({c:lc, px:(L.minx+L.maxx)/2, py:cutY+4, phase: idx%2? Math.PI:0}); });
+    lx.putImageData(ld,0,0); const gait = legs.length===4 ? [0,Math.PI,Math.PI,0] : (legs.length===3 ? [0,Math.PI,0] : [0,Math.PI]); legCanvases.push({c:lc, px:(L.minx+L.maxx)/2, py:cutY+4, phase: gait[idx]||0}); });
   bx.putImageData(bd,0,0);
   return RIGS[key]={body, legs:legCanvases, w, h}; }
 // 걷기 12프레임 시트: 리그로 12단계를 미리 그려두고 순서대로 재생 (발 들기 + 몸통 리듬 포함)
-const WALK_FRAMES=12, SHEETS={};
+const WALK_FRAMES=24, SHEETS={};
 function buildWalkSheet(key){ if(SHEETS[key]) return SHEETS[key]; const rig=buildWalkRig(key); if(!rig||!rig.legs.length) return null;
   const FH=240, sc=FH/rig.h, padX=Math.round(rig.w*sc*0.18), FW=Math.round(rig.w*sc)+padX*2, padY=14, H2=FH+padY*2;
   const sheet=document.createElement('canvas'); sheet.width=FW*WALK_FRAMES; sheet.height=H2; const g=sheet.getContext('2d');
   for(let f=0;f<WALK_FRAMES;f++){ const ph=f/WALK_FRAMES*Math.PI*2; const ox=f*FW+padX, oy=padY;
     const bodyBob=-Math.abs(Math.sin(ph))*5, pitch=Math.sin(ph*2)*0.025; // 두 걸음에 한 번 통통, 살짝 끄덕임
     g.save(); g.translate(ox+rig.w*sc/2, oy+FH*0.9+bodyBob); g.rotate(pitch); g.translate(-rig.w*sc/2, -FH*0.9); g.scale(sc,sc);
-    for(const L of rig.legs){ const sw=Math.sin(ph+L.phase); const k=sw*0.34, lift=Math.max(0,Math.cos(ph+L.phase))*4;
+    for(const L of rig.legs){ const sw=Math.sin(ph+L.phase); const k=sw*0.30, lift=Math.max(0,Math.cos(ph+L.phase))*4;
       g.save(); g.translate(L.px, L.py-lift/sc); g.transform(1,0,k,1,0,0); g.drawImage(L.c,-L.px,-L.py); g.restore(); }
     g.drawImage(rig.body,0,0); g.restore(); }
   return SHEETS[key]={sheet, FW, H2, scale:sc, padX, padY, rigH:rig.h, rigW:rig.w}; }
@@ -761,7 +762,7 @@ function endGame(){ running=false; $('hud').style.display='none'; const p=G.p; b
   $('resultTitle').textContent = G.win? '🏆 '+G.M.name+' 생존 성공!':G.pet.evoNames[p.evo]+'가 지쳐 쓰러졌습니다';
   $('resultSub').textContent = G.win? 'HAVE A NICE PETODAY! 펫투데이 세계를 지켜냈습니다.':(G.mode==='endless'?'무한 모드 기록: '+fmt(G.t):'다시 도전해서 더 오래 버텨보세요');
   $('resultStats').innerHTML = `<div>모드</div><b>${G.M.emoji} ${G.M.name}</b><div>생존 시간</div><b>${fmt(G.t)}</b><div>처치</div><b>${G.kills}</b><div>점수</div><b>${G.score.toLocaleString()}</b><div>도달 레벨</div><b>Lv ${p.lv}</b><div>최종 형태</div><b>${G.pet.evoNames[p.evo]}</b><div>최고 기록</div><b>${fmt(nb.time)} / ${nb.score.toLocaleString()}</b>`;
-  $('resultEarn').innerHTML = `획득 &nbsp;🥣 사료 +${kib.toLocaleString()} &nbsp;·&nbsp; 🧃 ${G.pet.name} 츄르 +${chu}` + (G.waters?` &nbsp;·&nbsp; 💧 댕비앙 ${G.waters}병`:'') + (G.snacksEaten?` &nbsp;·&nbsp; 🏮 야시장 간식 ${G.snacksEaten}개`:'');
+  $('resultEarn').innerHTML = `<span class="et">획득</span><span class="chip">🥣 사료 +${kib.toLocaleString()}</span><span class="chip">🧃 ${G.pet.name} 츄르 +${chu}</span>` + (G.waters?`<span class="chip">💧 댕비앙 ${G.waters}병</span>`:'') + (G.snacksEaten?`<span class="chip">🏮 야시장 간식 ${G.snacksEaten}개</span>`:'');
   $('resultPromoText').innerHTML = G.win? `${G.pet.name}도 목이 마를 땐 댕비앙 <small>pH9 프리미엄 알칼리수 ↗</small>` : `지친 ${G.pet.name}에게 댕비앙 한 모금 <small>펫투데이 스마트스토어 ↗</small>`;
   LAST_RUN={ pet:G.pet.id, mode:G.mode, time:G.t, score:G.score, lv:p.lv, kills:G.kills, submitted:false };
   const ranked = G.M.ranked && G.t>=30; $('rankBox').style.display = ranked?'':'none';
