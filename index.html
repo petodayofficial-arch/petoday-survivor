@@ -400,15 +400,15 @@ let curMode='classic', curPet=0, trainPet='pari';
 
 // 사료 상점 (전 캐릭터 공통)
 const PERKS = {
-  php:{ name:'든든한 밥그릇', emoji:'❤️', max:5, desc:'시작 최대 체력 +8%/Lv', cost:l=>150+l*150 },
-  pdmg:{ name:'산책 근육', emoji:'💪', max:5, desc:'모든 피해 +6%/Lv', cost:l=>200+l*200 },
-  pspd:{ name:'튼튼한 발톱', emoji:'🐾', max:4, desc:'이동속도 +5%/Lv', cost:l=>160+l*160 },
-  pmag:{ name:'코 감각', emoji:'👃', max:4, desc:'간식 획득 범위 +20%/Lv', cost:l=>120+l*120 },
-  pcd:{ name:'아침 스트레칭', emoji:'🤸', max:4, desc:'공격 쿨타임 -5%/Lv', cost:l=>220+l*220 },
-  plv:{ name:'유치원 졸업', emoji:'🎓', max:3, desc:'시작 레벨 +1/Lv (강화 카드 먼저 선택)', cost:l=>400+l*400 },
-  previve:{ name:'주인의 품', emoji:'🏠', max:1, desc:'쓰러져도 1회 부활 (체력 50%)', cost:l=>1500 },
-  pkibble:{ name:'사료 할인', emoji:'🥣', max:3, desc:'사료 획득량 +15%/Lv', cost:l=>300+l*300 },
-  pburst:{ name:'간식 응원', emoji:'✨', max:3, desc:'필살기 게이지 충전 +20%/Lv', cost:l=>250+l*250 },
+  php:{ name:'든든한 밥그릇', emoji:'❤️', max:5, desc:'시작 최대 체력 +8%/Lv', cost:l=>220+l*220 },
+  pdmg:{ name:'산책 근육', emoji:'💪', max:5, desc:'모든 피해 +6%/Lv', cost:l=>300+l*300 },
+  pspd:{ name:'튼튼한 발톱', emoji:'🐾', max:4, desc:'이동속도 +5%/Lv', cost:l=>240+l*240 },
+  pmag:{ name:'코 감각', emoji:'👃', max:4, desc:'간식 획득 범위 +20%/Lv', cost:l=>180+l*180 },
+  pcd:{ name:'아침 스트레칭', emoji:'🤸', max:4, desc:'공격 쿨타임 -5%/Lv', cost:l=>330+l*330 },
+  plv:{ name:'유치원 졸업', emoji:'🎓', max:3, desc:'시작 레벨 +1/Lv (강화 카드 먼저 선택)', cost:l=>600+l*600 },
+  previve:{ name:'주인의 품', emoji:'🏠', max:1, desc:'쓰러져도 1회 부활 (체력 50%)', cost:l=>2200 },
+  pkibble:{ name:'사료 할인', emoji:'🥣', max:3, desc:'사료 획득량 +15%/Lv', cost:l=>450+l*450 },
+  pburst:{ name:'간식 응원', emoji:'✨', max:3, desc:'필살기 게이지 충전 +20%/Lv', cost:l=>380+l*380 },
 };
 // 훈련 (캐릭터별, 츄르)
 const TRAIN = {
@@ -608,7 +608,7 @@ function endGame(){ running=false; $('hud').style.display='none'; const p=G.p; b
   // 기록
   const mb=SAVE.best[G.mode]||(SAVE.best[G.mode]={}); const prev=mb[G.pet.id]||{time:0,score:0}; const nb={time:Math.max(prev.time,G.t),score:Math.max(prev.score,G.score),win:prev.win||G.win}; mb[G.pet.id]=nb;
   // 보상: 사료 = 점수/8 + 생존 10초당 2, 모드 배율, 승리 보너스 / 츄르 = 1분당 1 + 보스당 2
-  const kib=Math.round((G.score/4 + G.t/10*4 + (G.win?300:0))*G.M.reward*(1+0.15*PK('pkibble')));
+  const kib=Math.round((G.score/5 + G.t/10*3.5 + (G.win?250:0))*G.M.reward*(1+0.15*PK('pkibble')));
   const chu=Math.floor(G.t/60)+G.churuEarned+(G.win?3:0);
   SAVE.kibble+=kib; SAVE.churu[G.pet.id]=(SAVE.churu[G.pet.id]||0)+chu; SAVE.runs++; SAVE.totalTime+=G.t; saveNow();
   $('resultImg').src = SP+G.pet.img[G.win?'love':'down']+'.png';
