@@ -4,19 +4,19 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>펫투데이 펫 서바이버</title>
-<meta name="description" content="펫투데이 마스코트 파리·콩이·시리·레오와 10분 생존! 무한 모드 TOP5에게 댕비앙 1박스 (10/20까지)">
+<meta name="description" content="펫투데이 마스코트 파리·콩이·시리·레오와 벼룩 떼를 피해 10분 버티는 브라우저 게임.">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="PETODAY">
-<meta property="og:title" content="[뱀서류 게임] 펫투데이 펫 서바이버 🐾 무한 모드 TOP5 댕비앙 1박스!">
-<meta property="og:description" content="파리·콩이·시리·레오와 벼룩 떼를 피해 10분 생존! 설치 없이 바로 플레이, 친구 초대하면 사료 보상 🎁">
+<meta property="og:title" content="[뱀서류 게임] 펫 서바이버">
+<meta property="og:description" content="강아지·고양이 캐릭터로 벼룩 떼 피해서 10분 버티기. 설치 없이 바로 플레이.">
 <meta property="og:url" content="https://petodayofficial-arch.github.io/petoday-survivor/">
 <meta property="og:image" content="https://petodayofficial-arch.github.io/petoday-survivor/assets/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:locale" content="ko_KR">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="[뱀서류 게임] 펫투데이 펫 서바이버 🐾 무한 모드 TOP5 댕비앙 1박스!">
-<meta name="twitter:description" content="파리·콩이·시리·레오와 벼룩 떼를 피해 10분 생존! 설치 없이 바로 플레이">
+<meta name="twitter:title" content="[뱀서류 게임] 펫 서바이버">
+<meta name="twitter:description" content="강아지·고양이 캐릭터로 벼룩 떼 피해서 10분 버티기. 설치 없이 바로 플레이.">
 <meta name="twitter:image" content="https://petodayofficial-arch.github.io/petoday-survivor/assets/og.png">
 <link rel="icon" href="assets/favicon.ico">
 <link rel="manifest" href="manifest.json">
@@ -686,11 +686,11 @@ async function renderInvite(){ const me=REF.mine; const box=$('inviteMine'), lis
   box.innerHTML=`<div style="margin-top:6px">내 초대 링크 <span style="font-family:Montserrat;font-weight:800;color:var(--blue);word-break:break-all">${esc(SITE_URL+"?ref="+REF.mine)}</span></div><div style="margin-top:6px"><button class="btn" style="margin:0;padding:8px 14px;font-size:13px" onclick="copyInvite()">📋 링크 복사</button> <span id="inviteCount" style="margin-left:8px">초대 ${REF.claimed}명 · 받은 보상 🥣 ${300*REF.claimed}</span></div>`;
   if(!lbOn()){ list.innerHTML=''; return; }
   try{ const n=await refClaim(); if(n!=null) $('inviteCount').textContent=`초대 ${n}명 · 받은 보상 🥣 ${300*n}`; const rows=await refCounts(); list.innerHTML = rows.length? `<div class="help" style="margin:0 0 4px;text-align:left">초대 순위</div>`+rows.map((r,i)=>`<div class="lr ${r.referrer.toLowerCase()===me.toLowerCase()?'me':''}"><span class="rk">${i+1}</span><span class="nk">${esc(r.referrer)}</span><span class="pt"></span><span class="tm">${r.invites}명</span></div>`).join('') : ''; }catch(e){ console.warn(e); } }
-async function copyInvite(){ try{ await navigator.clipboard.writeText('[뱀서류 게임] 펫투데이 펫 서바이버 같이 하자! TOP5는 댕비앙 🎁 '+REF.link); toast('📋 초대 링크 복사됨!'); }catch(e){ prompt('초대 링크를 복사하세요', REF.link); } }
+async function copyInvite(){ try{ await navigator.clipboard.writeText('[뱀서류 게임] 같이 하자, 이 링크로 들어오면 됨 '+REF.link); toast('📋 초대 링크 복사됨!'); }catch(e){ prompt('초대 링크를 복사하세요', REF.link); } }
 async function shareText(text){ const url=REF.link; if(navigator.share){ try{ await navigator.share({title:'펫투데이 펫 서바이버', text, url}); return; }catch(e){ if(e&&e.name==='AbortError') return; } }
   try{ await navigator.clipboard.writeText(text+' '+url); toast('📋 링크 복사됨! 카톡에 붙여넣기'); }catch(e){ prompt('아래 링크를 복사해 공유하세요', text+' '+url); } }
-function shareGame(){ shareText('[뱀서류 게임] 펫투데이 펫 서바이버 🐾 무한 모드 TOP5는 댕비앙 1박스 🎁 같이 해보자'); }
-function shareResult(){ const r=LAST_RUN; if(!r) return shareGame(); shareText(`[뱀서류 게임] 나 ${PETS.find(p=>p.id===r.pet).name}(으)로 ${r.mode==='endless'?'무한 모드':'클래식'} ${fmt(r.time)} 버텼다! 너도 도전해봐 (TOP5는 댕비앙 🎁)`); }
+function shareGame(){ shareText('[뱀서류 게임] 이거 은근 중독됨 ㅋㅋ 10분 버텨봐'); }
+function shareResult(){ const r=LAST_RUN; if(!r) return shareGame(); shareText(`[뱀서류 게임] 나 ${PETS.find(p=>p.id===r.pet).name}(으)로 ${r.mode==='endless'?'무한 모드':'클래식'} ${fmt(r.time)} 버팀. 너는 몇 분?`); }
 function setMode(k){ const M=MODES[k]; if(M.unlock&&!M.unlock.check()){ toast('🔒 '+M.unlock.desc); return; } curMode=k; renderTitle(); }
 function setTrainPet(id){ trainPet=id; renderTitle(); }
 function buyPerk(k){ const P=PERKS[k], lv=PK(k); const c=P.cost(lv); if(lv>=P.max||SAVE.kibble<c) return; SFX.buy(); SAVE.kibble-=c; SAVE.perks[k]=lv+1; saveNow(); renderTitle(); toast(P.emoji+' '+P.name+' Lv'+(lv+1)); }
