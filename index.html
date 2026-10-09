@@ -786,7 +786,7 @@ $('burstBtn').addEventListener('click',()=>{ if(running&&!paused) useBurst(); })
 
 // ====================== 부팅 ======================
 (async()=>{ const jobs=[]; for(const p of PETS) for(const [st,file] of Object.entries(p.img)) jobs.push(loadImg(p.id+'_'+st, SP+file+'.png')); for(const k of ['item_dangvian','item_poopbag','nm_logo','nm_neon','nm_pouch','nm_churros','nm_fries','nm_chicken','nm_pizza','nm_hotdog']) jobs.push(loadImg(k, SP+k+'.png')); await Promise.all(jobs); $('loading').style.display='none'; renderTitle(); $('title').classList.add('show'); refClaim(); if(SAVE.resetNotice){ delete SAVE.resetNotice; saveNow(); } if(REF.from && !REF.sent) toast('👫 '+REF.from+'님의 초대로 오셨네요! 무한 모드 3분 + 닉네임 등록이면 친구에게 보상이 가요');
-  if('serviceWorker' in navigator && location.protocol==='https:'){ try{ navigator.serviceWorker.register('sw.js').catch(()=>{}); }catch(e){} } })();
+  if('serviceWorker' in navigator && location.protocol==='https:'){ try{ let reloaded=false; navigator.serviceWorker.addEventListener('controllerchange',()=>{ if(reloaded) return; reloaded=true; if(!running) location.reload(); }); navigator.serviceWorker.register('sw.js').then(r=>{ try{ r.update(); }catch(e){} }).catch(()=>{}); }catch(e){} } })();
 </script>
 </body>
 </html>
