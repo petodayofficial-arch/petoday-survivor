@@ -388,7 +388,7 @@ const MODES = {
 const EVENT = { until:new Date('2026-10-20T23:59:59+09:00'), prize:'댕비앙 1박스', winners:5, announce:'10월 21일 펫투데이 인스타그램에 닉네임 발표 → DM으로 배송지 안내',
   get active(){ return Date.now()<=this.until.getTime(); }, get dday(){ return Math.max(0,Math.ceil((this.until.getTime()-Date.now())/86400000)); } };
 // 랭킹 서버 (Supabase) — url·key 비어 있으면 랭킹 탭은 '준비 중'
-const LB_CONFIG = { url:'', key:'' };
+const LB_CONFIG = { url:'https://hzokbpuplydnqazbrplo.supabase.co', key:'sb_publishable_tuKmHL-PeUIED4mvixxm2A_Adi58eUf' };
 const SITE_URL = 'https://petodayofficial-arch.github.io/petoday-survivor/';
 let curMode='classic', curPet=0, trainPet='pari';
 
