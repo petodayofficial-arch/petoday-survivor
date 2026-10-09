@@ -182,7 +182,7 @@
       <div id="tab_shop" style="display:none">
         <div class="sub">모든 캐릭터에 적용되는 영구 강화. 사료는 판이 끝날 때 점수·생존 시간으로 받습니다.</div>
         <div class="shop" id="shopList"></div>
-        <div class="help" style="margin-top:14px">밸런스 개편으로 10/9 이후 첫 접속 시 사료·강화가 한 번 초기화됩니다 (기록·닉네임 유지)<br><a href="#" onclick="resetSave();return false;" style="color:#999">내 데이터 전체 초기화</a></div>
+        <div class="help" style="margin-top:14px"><a href="#" onclick="resetSave();return false;" style="color:#999">내 데이터 전체 초기화</a></div>
       </div>
       <div id="tab_train" style="display:none">
         <div class="sub">캐릭터별 훈련. 츄르는 그 캐릭터로 플레이한 시간과 보스 처치로 받습니다.</div>
@@ -785,7 +785,7 @@ $('burstBtn').addEventListener('touchstart',e=>{ e.stopPropagation(); if(running
 $('burstBtn').addEventListener('click',()=>{ if(running&&!paused) useBurst(); });
 
 // ====================== 부팅 ======================
-(async()=>{ const jobs=[]; for(const p of PETS) for(const [st,file] of Object.entries(p.img)) jobs.push(loadImg(p.id+'_'+st, SP+file+'.png')); for(const k of ['item_dangvian','item_poopbag','nm_logo','nm_neon','nm_pouch','nm_churros','nm_fries','nm_chicken','nm_pizza','nm_hotdog']) jobs.push(loadImg(k, SP+k+'.png')); await Promise.all(jobs); $('loading').style.display='none'; renderTitle(); $('title').classList.add('show'); refClaim(); if(SAVE.resetNotice){ delete SAVE.resetNotice; saveNow(); setTimeout(()=>toast('🧹 밸런스 개편: 사료·강화가 초기화됐어요 (기록은 그대로)'),600); } if(REF.from && !REF.sent) toast('👫 '+REF.from+'님의 초대로 오셨네요! 무한 모드 3분 + 닉네임 등록이면 친구에게 보상이 가요');
+(async()=>{ const jobs=[]; for(const p of PETS) for(const [st,file] of Object.entries(p.img)) jobs.push(loadImg(p.id+'_'+st, SP+file+'.png')); for(const k of ['item_dangvian','item_poopbag','nm_logo','nm_neon','nm_pouch','nm_churros','nm_fries','nm_chicken','nm_pizza','nm_hotdog']) jobs.push(loadImg(k, SP+k+'.png')); await Promise.all(jobs); $('loading').style.display='none'; renderTitle(); $('title').classList.add('show'); refClaim(); if(SAVE.resetNotice){ delete SAVE.resetNotice; saveNow(); } if(REF.from && !REF.sent) toast('👫 '+REF.from+'님의 초대로 오셨네요! 무한 모드 3분 + 닉네임 등록이면 친구에게 보상이 가요');
   if('serviceWorker' in navigator && location.protocol==='https:'){ try{ navigator.serviceWorker.register('sw.js').catch(()=>{}); }catch(e){} } })();
 </script>
 </body>
