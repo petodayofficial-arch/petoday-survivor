@@ -493,7 +493,7 @@ const MODES = {
   endless:{ name:'무한 (랭킹전)', emoji:'🏆', desc:'끝없이 강해지는 적 · 생존 시간으로 전국 순위', time:Infinity, rate:1, bosses:'loop', reward:1.4, scaleMul:1.6, ranked:true },
 };
 // 이벤트 (무한 모드 랭킹전)
-const EVENT = { until:new Date('2026-10-20T23:59:59+09:00'), prize:'댕비앙 1박스', winners:5, announce:'10월 21일 펫투데이 인스타그램 <a href="https://www.instagram.com/petoday_family/" target="_blank" rel="noopener" style="color:#FFC94D">@petoday_family</a>에 닉네임 발표 → DM으로 배송지 안내',
+const EVENT = { until:new Date('2026-10-30T23:59:59+09:00'), prize:'댕비앙 1박스', winners:5, announce:'10월 31일 펫투데이 인스타그램 <a href="https://www.instagram.com/petoday_family/" target="_blank" rel="noopener" style="color:#FFC94D">@petoday_family</a>에 닉네임 발표 → DM으로 배송지 안내',
   get active(){ return Date.now()<=this.until.getTime(); }, get dday(){ return Math.max(0,Math.ceil((this.until.getTime()-Date.now())/86400000)); } };
 // 랭킹 서버 (Supabase) — url·key 비어 있으면 랭킹 탭은 '준비 중'
 const LB_CONFIG = { url:'https://hzokbpuplydnqazbrplo.supabase.co', key:'sb_publishable_tuKmHL-PeUIED4mvixxm2A_Adi58eUf' };
@@ -808,7 +808,7 @@ function endGame(){ running=false; $('hud').style.display='none'; const p=G.p; b
   $('resultPromoText').innerHTML = G.win? `${G.pet.name}도 목이 마를 땐 댕비앙 <small>pH9 프리미엄 알칼리수 ↗</small>` : `지친 ${G.pet.name}에게 댕비앙 한 모금 <small>펫투데이 스마트스토어 ↗</small>`;
   LAST_RUN={ pet:G.pet.id, mode:G.mode, time:G.t, score:G.score, lv:p.lv, kills:G.kills, submitted:false };
   const ranked = G.M.ranked && G.t>=30; $('rankBox').style.display = ranked?'':'none';
-  if(ranked){ try{ $('rbNick').value=localStorage.getItem('petoday_surv_nick')||''; }catch(e){} $('rbInsta').value=''; $('rbAgree').checked=false; $('rbSubmit').disabled=false; $('rbSubmit').textContent='등록하기'; $('rbMsg').textContent = lbOn()? (EVENT.active?`10/20까지 TOP ${EVENT.winners}에게 ${EVENT.prize}! 지금 기록: ${fmt(G.t)}`:'이벤트는 끝났지만 순위표에는 계속 올라갑니다.') : '랭킹 서버 준비 중 · 기록은 이 기기에 저장됩니다.'; }
+  if(ranked){ try{ $('rbNick').value=localStorage.getItem('petoday_surv_nick')||''; }catch(e){} $('rbInsta').value=''; $('rbAgree').checked=false; $('rbSubmit').disabled=false; $('rbSubmit').textContent='등록하기'; $('rbMsg').textContent = lbOn()? (EVENT.active?`10/30까지 TOP ${EVENT.winners}에게 ${EVENT.prize}! 지금 기록: ${fmt(G.t)}`:'이벤트는 끝났지만 순위표에는 계속 올라갑니다.') : '랭킹 서버 준비 중 · 기록은 이 기기에 저장됩니다.'; }
   $('result').classList.add('show'); }
 function togglePause(){ if(!running) return; if($('levelup').classList.contains('show')) return; paused=!paused; $('pause').classList.toggle('show',paused); if(paused){ const w=Object.entries(G.weapons).map(([k,l])=>`${WEAPONS[k].emoji} ${WEAPONS[k].name} Lv${l}`).join('<br>'); const ps=Object.entries(G.passives).map(([k,l])=>`${PASSIVES[k].emoji} ${PASSIVES[k].name} Lv${l}`).join('<br>')||'-'; $('pauseStats').innerHTML=`<div>무기</div><b style="font-size:13px">${w}</b><div>패시브</div><b style="font-size:13px">${ps}</b>`; } else lastT=performance.now(); }
 function backToTitle(){ running=false; paused=false; bgmStop(); ['pause','result','levelup'].forEach(i=>$(i).classList.remove('show')); $('hud').style.display='none'; ctx.clearRect(0,0,W,H); renderTitle(); $('title').classList.add('show'); }
@@ -823,7 +823,7 @@ let LB_CACHE={t:0,rows:[]};
 async function lbTop(n){ if(Date.now()-LB_CACHE.t<15000) return LB_CACHE.rows; const rows=await lbFetch(`leaderboard?select=nickname,pet,time,score,created_at&order=time.desc,score.desc&limit=${n||100}`); LB_CACHE={t:Date.now(),rows}; return rows; }
 async function lbSubmit(e){ await lbFetch('scores',{method:'POST',body:JSON.stringify(e)}); LB_CACHE.t=0; }
 function eventHtml(big){ const on=EVENT.active; const head = on? `<span class="pill">D-${EVENT.dday}</span>무한 모드 랭킹전 · <b>TOP ${EVENT.winners} ${EVENT.prize} 증정</b>` : `무한 모드 랭킹전 <b>종료</b> · 당첨자 발표 확인`;
-  const sub = big? `10월 20일 23:59까지 무한 모드 생존 시간 1~${EVENT.winners}위에게 ${EVENT.prize}를 드립니다.<br>기록이 끝나면 닉네임으로 랭킹에 등록하세요. 당첨 연락을 위해 인스타 아이디를 함께 남기면 좋아요.<br>${EVENT.announce}<br>👫 친구를 초대하면 사료·츄르 보상도 있어요 (아래 참고)` : (on?`10/20까지 · 친구 초대 보상 · 탭하면 순위표`:'');
+  const sub = big? `10월 30일 23:59까지 무한 모드 생존 시간 1~${EVENT.winners}위에게 ${EVENT.prize}를 드립니다.<br>기록이 끝나면 닉네임으로 랭킹에 등록하세요. 당첨 연락을 위해 인스타 아이디를 함께 남기면 좋아요.<br>${EVENT.announce}<br>👫 친구를 초대하면 사료·츄르 보상도 있어요 (아래 참고)` : (on?`10/30까지 · 친구 초대 보상 · 탭하면 순위표`:'');
   return head+(sub?`<small>${sub}</small>`:''); }
 async function renderRank(){ $('eventRules').innerHTML=eventHtml(true); const box=$('lbList'); const myNick=(()=>{try{return localStorage.getItem('petoday_surv_nick')||'';}catch(e){return '';}})();
   const mine=bestOf('endless'); const myBest=Object.entries(mine).sort((a,b)=>b[1].time-a[1].time)[0]; $('lbMine').textContent = myBest? `내 무한 모드 최고 기록: ${fmt(myBest[1].time)} (${PETS.find(p=>p.id===myBest[0])?.name||''})` : '아직 무한 모드 기록이 없습니다. 한 판 도전해 보세요!';

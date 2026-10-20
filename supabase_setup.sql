@@ -48,7 +48,7 @@ create trigger scores_rate_limit_trg before insert on public.scores for each row
 -- 당첨자 확인용 (대시보드에서 실행): 1~5위 + 연락처
 -- select nickname, contact, pet, time, score, created_at from public.scores
 --   where id in (select distinct on (lower(nickname)) id from public.scores order by lower(nickname), time desc, score desc)
---   and created_at <= '2026-10-20 23:59:59+09' order by time desc, score desc limit 5;
+--   and created_at <= '2026-10-30 23:59:59+09' order by time desc, score desc limit 5;
 
 -- 5) 친구 초대 (추천인): 초대받은 기기 1대당 1건, 3분 이상 플레이 + 닉네임 등록 시 기록
 create table if not exists public.referrals (
