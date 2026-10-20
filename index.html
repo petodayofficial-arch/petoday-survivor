@@ -664,7 +664,7 @@ function update(dt){
   }
   // 댕댕야시장 (2분마다 20초 개장, 간식 1개 선택 → 20초 버프)
   if(p.buff&&p.buff.t>0) p.buff.t-=dt;
-  if(!G.market && G.t>=G.nextMarket){ G.nextMarket+=120; const a=rand(0,6.28), d=240; let mx=p.x+Math.cos(a)*d, my=p.y+Math.sin(a)*d; mx=Math.max(p.x-W/2+190, Math.min(p.x+W/2-190, mx)); my=Math.max(p.y-H/2+230, Math.min(p.y+H/2-120, my)); const keys=Object.keys(SNACKS);
+  if(!G.market && G.t>=G.nextMarket){ G.nextMarket+=120; const a=rand(0,6.28); let mx=p.x+Math.cos(a)*120, my=(Math.sin(a)<0? p.y-260 : p.y+230); mx=Math.max(p.x-W/2+190, Math.min(p.x+W/2-190, mx)); my=Math.max(p.y-H/2+230, Math.min(p.y+H/2-120, my)); if(Math.abs(my-p.y)<150) my = (p.y-H/2+230 <= p.y-150) ? p.y-230 : p.y+200; const keys=Object.keys(SNACKS);
     G.market={ x:mx, y:my, t:22, snacks:keys.map((k,i)=>({key:k, x:mx+(i-1)*78, y:my-14})) }; toast('🏮 댕댕야시장 개장! 간식 하나 골라 드세요'); SFX.levelup(); }
   if(G.market){ const m=G.market; m.t-=dt; for(let i=m.snacks.length-1;i>=0;i--){ const s=m.snacks[i]; if(dist(s,p)<34){ p.buff={key:s.key,t:20}; G.snacksEaten++; const sn=SNACKS[s.key]; if(s.key==='chicken') p.hp=Math.min(p.maxHp,p.hp+p.maxHp*0.3);
       toast('😋 '+sn.name+' 냠냠! '+sn.desc+' (20초)'); SFX.buy(); G.fx.push({x:p.x,y:p.y,t:0.6,type:'ring',r:120,color:'rgba(255,120,200,'}); m.t=Math.min(m.t,0.6); m.snacks=[]; break; } }
