@@ -46,6 +46,7 @@
   #timer{font-family:'Montserrat';font-weight:800;font-size:24px;letter-spacing:1px;}
   .overlay{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(41,59,138,.82);pointer-events:auto;backdrop-filter:blur(4px);}
   .overlay.show{display:flex;}
+  #notice{z-index:6;}
   .panel{background:#fff;border-radius:28px;padding:30px 28px;max-width:860px;width:94%;box-shadow:0 24px 70px rgba(0,0,0,.45);text-align:center;max-height:94vh;overflow:auto;}
   .logo{height:54px;margin-bottom:6px;}
   .slogan{font-family:'Montserrat';font-weight:800;font-size:11px;letter-spacing:4px;color:var(--blue);margin-bottom:4px;}
@@ -215,6 +216,20 @@
         <span class="pbtn">🛒 스마트스토어 구경하기</span>
       </a>
       <div class="footer">© PETODAY · FAN GAME PROTOTYPE</div>
+    </div>
+  </div>
+
+  <div class="overlay" id="notice">
+    <div class="panel" style="max-width:520px">
+      <div style="font-size:44px;margin-bottom:6px">🙏</div>
+      <h2>랭킹전 기간 연장 안내</h2>
+      <div class="sub" style="font-size:14px;color:#444;font-weight:500;line-height:1.8">
+        랭킹 서버 문제로 기록이 정상 반영되지 않은 기간이 있어<br>
+        무한 모드 랭킹전을 <b style="color:var(--blue)">10월 30일(목) 23:59까지 연장</b>합니다.<br>
+        불편을 드려 죄송합니다. 지금은 정상 집계 중이니<br>
+        기록을 다시 등록해 주세요. TOP 5에게 댕비앙 1박스!
+      </div>
+      <button class="btn" onclick="closeNotice()">확인</button>
     </div>
   </div>
 
@@ -870,6 +885,9 @@ function setMode(k){ const M=MODES[k]; if(M.unlock&&!M.unlock.check()){ toast('�
 function setTrainPet(id){ trainPet=id; renderTitle(); }
 function buyPerk(k){ const P=PERKS[k], lv=PK(k); const c=P.cost(lv); if(lv>=P.max||SAVE.kibble<c) return; SFX.buy(); SAVE.kibble-=c; SAVE.perks[k]=lv+1; saveNow(); renderTitle(); toast(P.emoji+' '+P.name+' Lv'+(lv+1)); }
 function buyTrain(k){ const T=TRAIN[k], lv=TK(trainPet,k); const c=T.cost(lv); const have=SAVE.churu[trainPet]||0; if(lv>=T.max||have<c) return; SFX.buy(); SAVE.churu[trainPet]=have-c; (SAVE.training[trainPet]=SAVE.training[trainPet]||{})[k]=lv+1; saveNow(); renderTitle(); toast(T.emoji+' '+T.name+' Lv'+(lv+1)); }
+const NOTICE_KEY='petoday_surv_notice_1030';
+function showNoticeOnce(){ try{ if(localStorage.getItem(NOTICE_KEY)) return; }catch(e){} if(!EVENT.active) return; $('notice').classList.add('show'); }
+function closeNotice(){ $('notice').classList.remove('show'); try{ localStorage.setItem(NOTICE_KEY,'1'); }catch(e){} }
 function renderTitle(){ const best=bestOf(curMode);
   $('wKibble').textContent=SAVE.kibble.toLocaleString(); $('wChuru').textContent=Object.values(SAVE.churu).reduce((a,b)=>a+b,0);
   $('eventBanner').innerHTML=eventHtml(false);
@@ -893,7 +911,7 @@ $('burstBtn').addEventListener('touchstart',e=>{ e.stopPropagation(); if(running
 $('burstBtn').addEventListener('click',()=>{ if(running&&!paused) useBurst(); });
 
 // ====================== 부팅 ======================
-(async()=>{ const jobs=[]; for(const p of PETS) for(const [st,file] of Object.entries(p.img)) jobs.push(loadImg(p.id+'_'+st, SP+file+'.png?v='+SPRITE_VER)); for(const k of ['item_dangvian','item_poopbag','nm_logo','nm_neon','nm_pouch','nm_churros','nm_chicken','nm_hotdog']) jobs.push(loadImg(k, SP+k+'.png?v='+SPRITE_VER)); await Promise.all(jobs); $('loading').style.display='none'; renderTitle(); $('title').classList.add('show'); refClaim(); if(SAVE.resetNotice){ delete SAVE.resetNotice; saveNow(); } if(REF.from && !REF.sent) toast('👫 '+REF.from+'님의 초대로 오셨네요! 무한 모드 3분 + 닉네임 등록이면 친구에게 보상이 가요');
+(async()=>{ const jobs=[]; for(const p of PETS) for(const [st,file] of Object.entries(p.img)) jobs.push(loadImg(p.id+'_'+st, SP+file+'.png?v='+SPRITE_VER)); for(const k of ['item_dangvian','item_poopbag','nm_logo','nm_neon','nm_pouch','nm_churros','nm_chicken','nm_hotdog']) jobs.push(loadImg(k, SP+k+'.png?v='+SPRITE_VER)); await Promise.all(jobs); $('loading').style.display='none'; renderTitle(); $('title').classList.add('show'); refClaim(); if(!new URLSearchParams(location.search).get('cap')) showNoticeOnce(); if(SAVE.resetNotice){ delete SAVE.resetNotice; saveNow(); } if(REF.from && !REF.sent) toast('👫 '+REF.from+'님의 초대로 오셨네요! 무한 모드 3분 + 닉네임 등록이면 친구에게 보상이 가요');
   if('serviceWorker' in navigator && location.protocol==='https:'){ try{ let reloaded=false; navigator.serviceWorker.addEventListener('controllerchange',()=>{ if(reloaded) return; reloaded=true; if(!running) location.reload(); }); navigator.serviceWorker.register('sw.js').then(r=>{ try{ r.update(); }catch(e){} }).catch(()=>{}); }catch(e){} } })();
 </script>
 </body>
