@@ -817,7 +817,7 @@ function setTab(t){ document.querySelectorAll('.tab').forEach(e=>e.classList.tog
 
 // ====================== 랭킹 (Supabase REST) / 공유 ======================
 const lbOn = ()=>!!(LB_CONFIG.url&&LB_CONFIG.key);
-function clientId(){ let id=null; try{ id=localStorage.getItem('petoday_surv_cid'); if(!id){ id=(crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2)+Date.now()); localStorage.setItem('petoday_surv_cid',id); } }catch(e){ id='anon'; } return id; }
+function clientId(){ let id=null; try{ id=localStorage.getItem('petoday_surv_cid'); if(!id){ id=(crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2)+Date.now()); localStorage.setItem('petoday_surv_cid',id); } }catch(e){ if(!id){ window._cidTmp = window._cidTmp || ('tmp-'+Math.random().toString(36).slice(2)+Date.now()); id=window._cidTmp; } } return id; }
 async function lbFetch(path, opt){ const r=await fetch(LB_CONFIG.url.replace(/\/$/,'')+'/rest/v1/'+path, Object.assign({headers:{apikey:LB_CONFIG.key, Authorization:'Bearer '+LB_CONFIG.key, 'Content-Type':'application/json', Prefer:'return=minimal'}}, opt||{})); if(!r.ok) throw new Error('lb '+r.status+' '+(await r.text()).slice(0,120)); const txt=await r.text(); return txt? JSON.parse(txt) : null; }
 let LB_CACHE={t:0,rows:[]};
 async function lbTop(n){ if(Date.now()-LB_CACHE.t<15000) return LB_CACHE.rows; const rows=await lbFetch(`leaderboard?select=nickname,pet,time,score,created_at&order=time.desc,score.desc&limit=${n||100}`); LB_CACHE={t:Date.now(),rows}; return rows; }
@@ -834,14 +834,26 @@ async function renderRank(){ $('eventRules').innerHTML=eventHtml(true); const bo
   }catch(e){ box.innerHTML='<div class="empty">순위를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.</div>'; console.warn(e); } }
 function esc(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 let LAST_RUN=null;
-async function submitScore(){ const r=LAST_RUN; if(!r||r.submitted) return; const nick=$('rbNick').value.trim(), insta=$('rbInsta').value.trim().replace(/^@/,''); const msg=$('rbMsg');
-  if(nick.length<2||nick.length>10){ msg.textContent='닉네임은 2~10자로 입력해 주세요.'; return; } if(/[<>]/.test(nick)){ msg.textContent='닉네임에 < > 는 쓸 수 없습니다.'; return; } if(!$('rbAgree').checked){ msg.textContent='안내 사항에 동의해 주세요.'; return; }
+const LB_LIMITS = { time:[30,7200], scoreMul:40, lv:[1,200], kills:200000 };   // 서버 scores 테이블의 check 규칙과 동일하게 유지
+function lbSafePayload(p){ const t=Math.min(Math.max(p.time,LB_LIMITS.time[0]),LB_LIMITS.time[1]); return Object.assign({}, p, { time:t, score:Math.max(0,Math.min(p.score, t*LB_LIMITS.scoreMul)), lv:Math.min(Math.max(p.lv||1,LB_LIMITS.lv[0]),LB_LIMITS.lv[1]), kills:Math.min(Math.max(p.kills||0,0),LB_LIMITS.kills) }); }
+async function submitScore(){ const r=LAST_RUN; if(!r||r.submitted) return; const nick=$('rbNick').value.trim(), insta=$('rbInsta').value.trim().replace(/^@/,''); const msg=$('rbMsg'); const nlen=[...nick].length;
+  if(nlen<2||nlen>10){ msg.textContent='닉네임은 2~10자로 입력해 주세요.'; return; } if(/[<>]/.test(nick)){ msg.textContent='닉네임에 < > 는 쓸 수 없습니다.'; return; } if(!$('rbAgree').checked){ msg.textContent='안내 사항에 동의해 주세요.'; return; }
   if(!lbOn()){ msg.textContent='랭킹 서버가 아직 열리지 않았습니다. 기록은 이 기기에 저장돼 있어요.'; return; }
+  if(r.time<LB_LIMITS.time[0]){ msg.textContent='30초 이상 버틴 기록만 등록할 수 있어요.'; return; }
   $('rbSubmit').disabled=true; msg.textContent='등록 중…';
-  try{ await lbSubmit({ nickname:nick, contact:insta||null, pet:r.pet, time:Math.floor(r.time), score:Math.round(r.score), lv:r.lv, kills:r.kills, client_id:clientId(), version:'v4' }); r.submitted=true; try{ localStorage.setItem('petoday_surv_nick',nick); }catch(e){} refReport(nick, r.time);
+  const payload={ nickname:nick, contact:insta||null, pet:r.pet, time:Math.floor(r.time), score:Math.round(r.score), lv:r.lv, kills:r.kills, client_id:clientId(), version:'v4' };
+  try{
+    try{ await lbSubmit(payload); }
+    catch(e1){ const s=String(e1); console.warn('submit#1', s);
+      if(s.includes('23514')||s.includes('check constraint')){ await lbSubmit(lbSafePayload(payload)); }   // 서버 상한 규칙(점수≤시간×40 등)에 걸림 → 상한 안으로 맞춰 재등록. 순위는 생존 시간 기준이라 영향 없음
+      else if(s.includes('rate limit')){ throw e1; }
+      else { await new Promise(res=>setTimeout(res,1500)); await lbSubmit(payload); } }                   // 일시적 네트워크 오류 → 1.5초 뒤 한 번 더
+    r.submitted=true; try{ localStorage.setItem('petoday_surv_nick',nick); }catch(e){} refReport(nick, r.time);
     let rankTxt=''; try{ const rows=await lbTop(100); const idx=rows.findIndex(x=>x.nickname===nick); rankTxt = idx>=0? ` 현재 ${idx+1}위!`:' (100위 밖)'; }catch(e){}
     msg.innerHTML=`✅ 등록 완료!${rankTxt} <a href="#" onclick="backToTitle();setTab('rank');return false;">순위표 보기</a>`; $('rbSubmit').textContent='등록됨'; SFX.buy();
-  }catch(e){ console.warn(e); msg.textContent='등록에 실패했습니다. 잠시 후 다시 시도해 주세요.'; $('rbSubmit').disabled=false; } }
+  }catch(e){ console.warn(e); const s=String(e); const code=(s.match(/lb (\d{3})/)||[])[1];
+    msg.textContent = s.includes('rate limit')? '같은 기기에서 1분에 3번까지만 등록할 수 있어요. 잠시 후 다시 시도해 주세요.' : (code? `등록에 실패했습니다 (오류 ${code}). 잠시 후 다시 시도해 주세요.` : '네트워크 연결을 확인하고 다시 시도해 주세요.');
+    $('rbSubmit').disabled=false; } }
 // ---- 친구 초대 ----
 const REF = { get mine(){ try{ return localStorage.getItem('petoday_surv_nick')||''; }catch(e){ return ''; } }, get from(){ try{ return localStorage.getItem('petoday_surv_ref')||''; }catch(e){ return ''; } },
   get link(){ return this.mine? SITE_URL+'?ref='+encodeURIComponent(this.mine) : SITE_URL; },

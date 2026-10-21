@@ -10,10 +10,10 @@ create table if not exists public.scores (
   nickname    text not null check (char_length(nickname) between 2 and 10 and nickname !~ '[<>]'),
   contact     text check (contact is null or char_length(contact) <= 30),
   pet         text not null check (pet in ('pari','kong','siri','reo')),
-  time        integer not null check (time between 30 and 7200),      -- 생존 초 (최대 2시간)
-  score       integer not null check (score >= 0 and score <= time * 40), -- 시간 대비 비정상 점수 차단
-  lv          integer check (lv between 1 and 200),
-  kills       integer check (kills between 0 and 200000),
+  time        integer not null check (time between 30 and 14400),     -- 생존 초 (최대 4시간)
+  score       integer not null check (score >= 0 and score <= 5000 + time*60 + (time*time)/10), -- 시간 대비 비정상 점수 차단 (후반 스폰 가속 반영)
+  lv          integer check (lv between 1 and 500),
+  kills       integer check (kills between 0 and 2000000),
   client_id   text,
   version     text
 );
